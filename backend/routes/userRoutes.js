@@ -11,7 +11,7 @@ import {
   addProductToFavorites,
   removeProductFromFavorites,
 } from '../controllers/userController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, admin, manager } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -19,8 +19,8 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', authUser);
 
-// Глобальный список пользователей (только для Админа)
-router.route('/').get(protect, admin, getUsers);
+// Глобальный список пользователей (для Админа и Менеджера)
+router.route('/').get(protect, manager, getUsers);
 
 // Работа с собственным профилем
 router.route('/profile')
@@ -35,7 +35,7 @@ router.route('/favorites/:productId').delete(protect, removeProductFromFavorites
 // Важно: эти маршруты с параметром /:id должны идти ВНИЗУ, после /profile и /favorites, 
 // чтобы Express не перепутал слово 'profile' с ID пользователя.
 router.route('/:id')
-  .get(protect, admin, getUserById)
+  .get(protect, manager, getUserById) // Менеджер может просматривать
   .put(protect, admin, updateUser)      // Админ обновляет данные и РОЛЬ
   .delete(protect, admin, deleteUser);  // Админ удаляет пользователя
 

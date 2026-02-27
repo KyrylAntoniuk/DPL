@@ -160,7 +160,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
 // @desc    Получить список всех пользователей
 // @route   GET /api/users
-// @access  Private/Admin
+// @access  Private/Manager/Admin
 const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find({});
   res.json(users);
@@ -168,7 +168,7 @@ const getUsers = asyncHandler(async (req, res) => {
 
 // @desc    Получить пользователя по ID
 // @route   GET /api/users/:id
-// @access  Private/Admin
+// @access  Private/Manager/Admin
 const getUserById = asyncHandler(async (req, res) => {
   // Ищем пользователя, но исключаем поле пароля из ответа (.select('-password'))
   const user = await User.findById(req.params.id).select('-password');

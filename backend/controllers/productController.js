@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Product from '../models/productModel.js';
 import Review from '../models/reviewModel.js';
+
 // @desc    Получить список всех товаров
 // @route   GET /api/products
 // @access  Public
@@ -20,15 +21,19 @@ const getProducts = asyncHandler(async (req, res) => {
       }
     : {};
 
-  // 3. Считаем общее количество товаров, удовлетворяющих поиску (нужно фронтенду для отрисовки кнопок страниц 1, 2, 3...)
-  const count = await Product.countDocuments({ ...keyword });
+  // 3. Фильтрация по категории и бренду
+  const category = req.query.category ? { category: req.query.category } : {};
+  const brand = req.query.brand ? { brand: req.query.brand } : {};
 
-  // 4. Ищем товары в базе с лимитом и пропуском
-  const products = await Product.find({ ...keyword })
+  // 4. Считаем общее количество товаров, удовлетворяющих поиску (нужно фронтенду для отрисовки кнопок страниц 1, 2, 3...)
+  const count = await Product.countDocuments({ ...keyword, ...category, ...brand });
+
+  // 5. Ищем товары в базе с лимитом и пропуском
+  const products = await Product.find({ ...keyword, ...category, ...brand })
     .limit(pageSize) // Ограничиваем количество
     .skip(pageSize * (page - 1)); // Пропускаем товары предыдущих страниц
 
-  // 5. Возвращаем объект с товарами и данными для пагинации
+  // 6. Возвращаем объект с товарами и данными для пагинации
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
 });
 

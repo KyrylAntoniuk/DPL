@@ -6,6 +6,9 @@ import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import filterRoutes from './routes/filterRoutes.js';
+
 // Загрузка переменных окружения (включая MONGO_URI)
 dotenv.config();
 
@@ -25,12 +28,10 @@ app.get('/', (req, res) => {
 
 // Здесь в будущем будут подключены роуты
 app.use('/api/users', userRoutes);
-
 app.use('/api/products', productRoutes);
-
 app.use('/api/orders', orderRoutes);
-// app.use('/api/products', productRoutes);
-// app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/filters', filterRoutes);
 
 // Глобальный обработчик ошибок (Middleware)
 app.use((err, req, res, next) => {
