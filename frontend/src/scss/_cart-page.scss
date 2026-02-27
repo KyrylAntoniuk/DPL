@@ -1,0 +1,35 @@
+@use 'sass:color';
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.cart-page {
+  .list-group-item {
+    border-bottom: 1px solid #e9ecef;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .btn-block {
+    width: 100%;
+  }
+
+  .fa-trash {
+    color: $danger-color;
+    transition: color 0.2s ease-in-out;
+    &:hover {
+      color: color.adjust($danger-color, $lightness: -10%);
+    }
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .cart-page {
+    h1 {
+      font-size: 1.75rem;
+    }
+    .col-md-8, .col-md-4 {
+      margin-bottom: 1.5rem;
+    }
+  }
+}

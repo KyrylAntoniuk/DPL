@@ -1,0 +1,103 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Form, Button } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+import Message from '../../components/Message';
+import Loader from '../../components/Loader';
+import FormContainer from '../../components/FormContainer';
+import {
+  useGetUserByIdQuery,
+  useUpdateUserMutation,
+} from '../../redux/api/usersApiSlice';
+import useTitle from '../../hooks/useTitle';
+
+const UserEditPage = () => {
+  const { id: userId } = useParams();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('user');
+
+  const { data: user, isLoading, refetch, error } = useGetUserByIdQuery(userId);
+  const [updateUser, { isLoading: loadingUpdate }] = useUpdateUserMutation();
+
+  const navigate = useNavigate();
+  useTitle(user ? `Редактирование ${user.name}` : 'Редактирование');
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setEmail(user.email);
+      setRole(user.role);
+    }
+  }, [user]);
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      await updateUser({ userId, name, email, role });
+      toast.success('Пользователь успешно обновлен');
+      refetch();
+      navigate('/admin/users');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
+
+  return (
+    <>
+      <Link to="/admin/users" className="btn btn-light my-3">
+        Назад
+      </Link>
+      <FormContainer>
+        <h1>Редактировать пользователя</h1>
+        {loadingUpdate && <Loader />}
+        {isLoading ? (
+          <Loader />
+        ) : error ? (
+          <Message variant="danger">{error?.data?.message || error.error}</Message>
+        ) : (
+          <Form onSubmit={submitHandler}>
+            <Form.Group controlId="name" className="my-2">
+              <Form.Label>Имя</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Введите имя"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              ></Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="email" className="my-2">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                placeholder="Введите email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              ></Form.Control>
+            </Form.Group>
+
+            <Form.Group controlId="role" className="my-2">
+              <Form.Label>Роль</Form.Label>
+              <Form.Control
+                as="select"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <option value="user">Пользователь</option>
+                <option value="manager">Менеджер</option>
+                <option value="admin">Администратор</option>
+              </Form.Control>
+            </Form.Group>
+
+            <Button type="submit" variant="primary" className="my-2">
+              Обновить
+            </Button>
+          </Form>
+        )}
+      </FormContainer>
+    </>
+  );
+};
+
+export default UserEditPage;

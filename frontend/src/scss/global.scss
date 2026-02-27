@@ -1,0 +1,26 @@
+// Global SCSS styles
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'product-card';
+@use 'product-page';
+@use 'cart-page';
+@use 'filter-sidebar'; // Импортируем стили для сайдбара
+
+// Стили для контейнера форм (логин, регистрация и т.д.)
+.form-container {
+  margin-top: 3rem;
+  .card {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+  }
+}
+
+// Адаптивность для мобильных устройств
+@include media-breakpoint-down(sm) {
+  .form-container {
+    .card {
+      padding: 2rem !important;
+    }
+  }
+}

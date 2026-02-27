@@ -1,0 +1,38 @@
+@use 'variables' as *;
+
+.product-card {
+  transition: all 0.3s ease-in-out;
+  border: 1px solid #e9ecef;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .card-img-top {
+    object-fit: cover;
+    height: 200px; // Фиксированная высота для единообразия
+  }
+
+  .product-title {
+    // Ограничиваем название двумя строками и добавляем многоточие
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 48px; // Высота для двух строк текста
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  a {
+    text-decoration: none;
+    color: $dark-color;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

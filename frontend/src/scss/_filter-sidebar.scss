@@ -1,0 +1,27 @@
+@use 'mixins' as *;
+
+.filter-sidebar {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  height: 100%;
+
+  h4, h5 {
+    font-weight: 600;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-check {
+    margin-bottom: 0.5rem;
+  }
+}
+
+// Адаптивность для мобильных
+@include media-breakpoint-down(md) {
+  .filter-sidebar {
+    margin-bottom: 2rem;
+  }
+}
