@@ -2,8 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import { updateCart } from '../../utils/cartUtils';
 
 const initialState = localStorage.getItem('cart')
-  ? JSON.parse(localStorage.getItem('cart'))
-  : { cartItems: [], shippingAddress: {}, paymentMethod: 'PayPal' };
+    ? JSON.parse(localStorage.getItem('cart'))
+    : { cartItems: [], shippingAddress: {}, paymentMethod: 'PayPal' };
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -14,13 +14,13 @@ const cartSlice = createSlice({
 
       // Ищем товар по ID продукта И по ID варианта
       const existItem = state.cartItems.find(
-        (x) => x._id === newItem._id && x.variantId === newItem.variantId
+          (x) => x._id === newItem._id && x.variantId === newItem.variantId
       );
 
       if (existItem) {
         // Если такой товар (с таким же вариантом) уже есть, обновляем его
         state.cartItems = state.cartItems.map((x) =>
-          x._id === existItem._id && x.variantId === existItem.variantId ? newItem : x
+            x._id === existItem._id && x.variantId === existItem.variantId ? newItem : x
         );
       } else {
         // Иначе, добавляем новый товар в корзину
@@ -33,7 +33,7 @@ const cartSlice = createSlice({
       // При удалении также нужно учитывать и ID варианта
       const { productId, variantId } = action.payload;
       state.cartItems = state.cartItems.filter(
-        (x) => !(x._id === productId && x.variantId === variantId)
+          (x) => !(x._id === productId && x.variantId === variantId)
       );
       return updateCart(state);
     },
@@ -45,7 +45,7 @@ const cartSlice = createSlice({
       state.paymentMethod = action.payload;
       return updateCart(state);
     },
-    clearCartItems: (state, action) => {
+    clearCartItems: (state) => {
       state.cartItems = [];
       return updateCart(state);
     },

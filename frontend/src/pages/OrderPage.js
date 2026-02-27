@@ -69,17 +69,18 @@ const OrderPage = () => {
                       <Row>
                         <Col md={1}>
                           <Image
-                            src={item.generalImages[0]}
+                            src={item.image} // ИСПРАВЛЕНО: используем item.image
                             alt={item.name}
                             fluid
                             rounded
                           />
                         </Col>
                         <Col>
-                          <Link to={`/product/${item._id}`}>{item.name}</Link>
+                          {/* Ссылка на товар должна вести на ID продукта, а не на ID элемента заказа */}
+                          <Link to={`/product/${item.product}`}>{item.name}</Link>
                         </Col>
                         <Col md={4}>
-                          {item.qty} x ${item.price} = ${item.qty * item.price}
+                          {item.qty} x ${item.price} = ${(item.qty * item.price).toFixed(2)}
                         </Col>
                       </Row>
                     </ListGroup.Item>
