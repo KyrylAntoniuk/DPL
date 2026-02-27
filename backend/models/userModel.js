@@ -40,7 +40,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Middleware: хеширование пароля перед сохранением в БД
 userSchema.pre('save', async function () {
-  // Если пароль не менялся (например, при обновлении имени или роли), просто выходим
+  // Если пароль неsd менялся (например, при обновлении имени или роли), просто выходим
   if (!this.isModified('password')) {
     return; 
   }
