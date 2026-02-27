@@ -2,40 +2,56 @@ import asyncHandler from 'express-async-handler';
 import Product from '../models/productModel.js';
 import Review from '../models/reviewModel.js';
 
-// @desc    Получить список всех товаров
+// @desc    Получить список всех товаров с фильтрацией и пагинацией
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  // 1. Настройка пагинации
-  const pageSize = 10; // Сколько товаров выводить на одной странице
-  const page = Number(req.query.pageNumber) || 1; // Берем номер страницы из URL (например, ?pageNumber=2)
+  const pageSize = 10; // Количество товаров на странице
+  const page = Number(req.query.pageNumber) || 1; // Номер страницы
 
-  // 2. Настройка поиска по ключевому слову
-  // Если в URL есть ?keyword=iphone, создаем объект для поиска по регулярному выражению
-  const keyword = req.query.keyword
-    ? {
-        name: {
-          $regex: req.query.keyword,
-          $options: 'i', // 'i' означает регистронезависимый поиск (Iphone == iphone)
-        },
-      }
-    : {};
+  // --- ДИНАМИЧЕСКАЯ ФИЛЬТРАЦИЯ ---
+  const queryParams = { ...req.query };
+  const excludedFields = ['keyword', 'pageNumber', 'pageSize', 'sort'];
+  excludedFields.forEach((field) => delete queryParams[field]);
 
-  // 3. Фильтрация по категории и бренду
-  const category = req.query.category ? { category: req.query.category } : {};
-  const brand = req.query.brand ? { brand: req.query.brand } : {};
+  // Создаем объект для поиска в MongoDB
+  const filter = {};
 
-  // 4. Считаем общее количество товаров, удовлетворяющих поиску (нужно фронтенду для отрисовки кнопок страниц 1, 2, 3...)
-  const count = await Product.countDocuments({ ...keyword, ...category, ...brand });
+  // 1. Поиск по ключевому слову (остается без изменений)
+  if (req.query.keyword) {
+    filter.name = {
+      $regex: req.query.keyword,
+      $options: 'i', // регистронезависимый поиск
+    };
+  }
 
-  // 5. Ищем товары в базе с лимитом и пропуском
-  const products = await Product.find({ ...keyword, ...category, ...brand })
-    .limit(pageSize) // Ограничиваем количество
-    .skip(pageSize * (page - 1)); // Пропускаем товары предыдущих страниц
+  // 2. Динамическое добавление остальных фильтров (category, brand, ram и т.д.)
+  for (const key in queryParams) {
+    filter[key] = queryParams[key];
+  }
+  // --- КОНЕЦ ДИНАМИЧЕСКОЙ ФИЛЬТРАЦИИ ---
 
-  // 6. Возвращаем объект с товарами и данными для пагинации
+  // Считаем общее количество товаров по фильтру
+  const count = await Product.countDocuments(filter);
+
+  // Ищем товары в базе с фильтром, лимитом и пропуском
+  const products = await Product.find(filter)
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  // Возвращаем товары и информацию для пагинации
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
 });
+
+
+// @desc    Получить список уникальных категорий
+// @route   GET /api/products/categories
+// @access  Public
+const getProductCategories = asyncHandler(async (req, res) => {
+  const categories = await Product.distinct('category');
+  res.json(categories);
+});
+
 
 // @desc    Получить информацию о конкретном товаре по ID
 // @route   GET /api/products/:id
@@ -152,11 +168,12 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 // Не забудь обновить export в самом низу файла!
-export { 
-  getProducts, 
-  getProductById, 
-  createProductReview, 
-  createProduct, 
-  updateProduct, 
-  deleteProduct 
+export {
+  getProducts,
+  getProductById,
+  getProductCategories, // <-- Добавили экспорт
+  createProductReview,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 };

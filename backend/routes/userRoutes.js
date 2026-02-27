@@ -8,8 +8,8 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-  addProductToFavorites,
-  removeProductFromFavorites,
+  addFavorite, // <-- Импортируем новый контроллер
+  removeFavorite, // <-- Импортируем новый контроллер
 } from '../controllers/userController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
 
@@ -23,20 +23,21 @@ router.post('/login', authUser);
 router.route('/').get(protect, manager, getUsers);
 
 // Работа с собственным профилем
-router.route('/profile')
-  .get(protect, getUserProfile)
-  .put(protect, updateUserProfile); // Добавили PUT для обновления своих данных
+router.route('/profile').get(protect, getUserProfile).put(protect, updateUserProfile);
 
-// Список желаний
-router.route('/favorites').post(protect, addProductToFavorites);
-router.route('/favorites/:productId').delete(protect, removeProductFromFavorites);
+// --- МАРШРУТЫ ДЛЯ ИЗБРАННОГО ---
+// Добавить товар в избранное
+router.route('/favorites').post(protect, addFavorite);
+// Удалить товар из избранного
+router.route('/favorites/:productId').delete(protect, removeFavorite);
+// --- КОНЕЦ МАРШРУТОВ ДЛЯ ИЗБРАННОГО ---
 
 // Маршруты для управления конкретным пользователем администратором
-// Важно: эти маршруты с параметром /:id должны идти ВНИЗУ, после /profile и /favorites, 
-// чтобы Express не перепутал слово 'profile' с ID пользователя.
-router.route('/:id')
+// Важно: эти маршруты с параметром /:id должны идти ВНИЗУ
+router
+  .route('/:id')
   .get(protect, manager, getUserById) // Менеджер может просматривать
-  .put(protect, admin, updateUser)      // Админ обновляет данные и РОЛЬ
-  .delete(protect, admin, deleteUser);  // Админ удаляет пользователя
+  .put(protect, admin, updateUser) // Админ обновляет данные и РОЛЬ
+  .delete(protect, admin, deleteUser); // Админ удаляет пользователя
 
 export default router;

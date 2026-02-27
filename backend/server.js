@@ -3,11 +3,15 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 
+// Импортируем маршруты
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import filterRoutes from './routes/filterRoutes.js';
+
+// Импортируем наши новые middleware для обработки ошибок
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Загрузка переменных окружения (включая MONGO_URI)
 dotenv.config();
@@ -26,21 +30,22 @@ app.get('/', (req, res) => {
   res.send('API интернет-магазина работает...');
 });
 
-// Здесь в будущем будут подключены роуты
+// Подключаем все маршруты
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/filters', filterRoutes);
 
-// Глобальный обработчик ошибок (Middleware)
-app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode).json({
-    message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-  });
-});
+// --- ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ОШИБОК ---
+// Middleware для обработки 404 (несуществующий маршрут)
+// Должен быть после всех успешных маршрутов
+app.use(notFound);
+
+// Глобальный обработчик всех ошибок
+// Должен быть самым последним middleware в цепочке
+app.use(errorHandler);
+// --- КОНЕЦ ПОДКЛЮЧЕНИЯ ---
 
 const PORT = process.env.PORT || 5000;
 

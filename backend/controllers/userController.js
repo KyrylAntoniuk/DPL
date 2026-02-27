@@ -82,21 +82,26 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-const addProductToFavorites = asyncHandler(async (req, res) => {
+// @desc    Добавить товар в избранное
+// @route   POST /api/users/favorites
+// @access  Private
+const addFavorite = asyncHandler(async (req, res) => {
   const { productId } = req.body;
-  const user = await User.findById(req.user._id);
+
+  if (!productId) {
+    res.status(400);
+    throw new Error('Не передан ID товара (productId)');
+  }
+
+  // Используем $addToSet для атомарного добавления ID в массив, избегая дубликатов
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $addToSet: { favorites: productId } },
+    { new: true } // Возвращаем обновленный документ
+  ).populate('favorites', 'name image price'); // Заполняем данными из модели Product
 
   if (user) {
-    // Проверяем, нет ли уже этого товара в избранном
-    if (user.favorites.includes(productId)) {
-      res.status(400);
-      throw new Error('Товар уже находится в списке желаний');
-    }
-
-    user.favorites.push(productId);
-    await user.save();
-    
-    res.status(200).json({ message: 'Товар добавлен в избранное', favorites: user.favorites });
+    res.status(200).json(user.favorites);
   } else {
     res.status(404);
     throw new Error('Пользователь не найден');
@@ -105,23 +110,25 @@ const addProductToFavorites = asyncHandler(async (req, res) => {
 
 // @desc    Удалить товар из избранного
 // @route   DELETE /api/users/favorites/:productId
-// @access  Private (только авторизованные)
-const removeProductFromFavorites = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+// @access  Private
+const removeFavorite = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  // Используем $pull для атомарного удаления ID из массива
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $pull: { favorites: productId } },
+    { new: true } // Возвращаем обновленный документ
+  ).populate('favorites', 'name image price'); // Заполняем данными из модели Product
 
   if (user) {
-    // Фильтруем массив, оставляя только те ID, которые не совпадают с переданным
-    user.favorites = user.favorites.filter(
-      (id) => id.toString() !== req.params.productId.toString()
-    );
-    
-    await user.save();
-    res.status(200).json({ message: 'Товар удален из избранного', favorites: user.favorites });
+    res.status(200).json(user.favorites);
   } else {
     res.status(404);
     throw new Error('Пользователь не найден');
   }
 });
+
 
 // @desc    Обновить профиль пользователя (свои данные)
 // @route   PUT /api/users/profile
@@ -229,15 +236,15 @@ const deleteUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { 
-  authUser, 
-  registerUser, 
-  getUserProfile, 
-  addProductToFavorites, 
-  removeProductFromFavorites,
-  updateUserProfile, // Новая
-  getUsers,          // Новая
-  getUserById,       // Новая
-  updateUser,        // Новая
-  deleteUser         // Новая
+export {
+  authUser,
+  registerUser,
+  getUserProfile,
+  addFavorite, // Обновлено
+  removeFavorite, // Обновлено
+  updateUserProfile,
+  getUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
 };
