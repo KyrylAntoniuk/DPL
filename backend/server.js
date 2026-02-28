@@ -1,5 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
+// Загрузка переменных окружения ДОЛЖНА быть самым первым действием
+dotenv.config();
+
 import cors from 'cors';
 import connectDB from './config/db.js';
 
@@ -9,12 +12,10 @@ import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import filterRoutes from './routes/filterRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 // Импортируем наши новые middleware для обработки ошибок
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-
-// Загрузка переменных окружения (включая MONGO_URI)
-dotenv.config();
 
 // Подключение к базе данных
 connectDB();
@@ -36,6 +37,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/filters', filterRoutes);
+app.use('/api', paymentRoutes);
 
 // --- ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ОШИБОК ---
 // Middleware для обработки 404 (несуществующий маршрут)

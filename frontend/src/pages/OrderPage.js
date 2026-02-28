@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Row, Col, ListGroup, Image, Card, Badge } from 'react-bootstrap'; // Добавил Badge
+import { Row, Col, ListGroup, Image, Card, Badge } from 'react-bootstrap';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import Message from '../components/Message';
 import Loader from '../components/Loader';
-import { useGetOrderByIdQuery } from '../redux/api/ordersApiSlice';
+import CheckoutForm from '../components/CheckoutForm';
+import { 
+  useGetOrderByIdQuery, 
+  useGetStripePublishableKeyQuery, 
+  useCreatePaymentIntentMutation 
+} from '../redux/api/ordersApiSlice';
 import useTitle from '../hooks/useTitle';
 
 const OrderPage = () => {
@@ -11,8 +18,35 @@ const OrderPage = () => {
   useTitle(`Заказ ${orderId}`);
 
   const { data: order, isLoading, error } = useGetOrderByIdQuery(orderId);
+  const { data: stripeConfig, isLoading: loadingConfig, error: configError } = useGetStripePublishableKeyQuery();
+  const [createPaymentIntent] = useCreatePaymentIntentMutation();
 
-  // Функция для выбора цвета бейджа в зависимости от статуса
+  const [clientSecret, setClientSecret] = useState('');
+  const [stripePromise, setStripePromise] = useState(null);
+
+  useEffect(() => {
+    console.log('Full Stripe Config:', stripeConfig); // ЛОГ
+    if (stripeConfig && stripeConfig.publishableKey) {
+      console.log('Stripe Config loaded:', stripeConfig.publishableKey);
+      setStripePromise(loadStripe(stripeConfig.publishableKey));
+    } else {
+      console.warn('Stripe Config is missing publishableKey'); // ЛОГ
+    }
+  }, [stripeConfig]);
+
+  useEffect(() => {
+    if (order && !order.isPaid && order.paymentMethod === 'Card' && !clientSecret) {
+      console.log('Creating Payment Intent...');
+      createPaymentIntent({ orderId: order._id })
+        .unwrap()
+        .then((res) => {
+            console.log('Client Secret received:', res.clientSecret);
+            setClientSecret(res.clientSecret);
+        })
+        .catch((err) => console.error('Error creating payment intent:', err));
+    }
+  }, [order, createPaymentIntent, clientSecret]);
+
   const getStatusVariant = (status) => {
     switch (status) {
       case 'Новый': return 'primary';
@@ -22,6 +56,12 @@ const OrderPage = () => {
       case 'Отменен': return 'danger';
       default: return 'secondary';
     }
+  };
+
+  const getImageSrc = (src) => {
+    if (!src) return 'https://via.placeholder.com/150?text=No+Image';
+    if (src.includes('cdn-apple.com')) return 'https://via.placeholder.com/150?text=Apple+Image';
+    return src;
   };
 
   return isLoading ? (
@@ -36,20 +76,13 @@ const OrderPage = () => {
           <ListGroup variant="flush">
             <ListGroup.Item>
               <h2>Доставка</h2>
-              <p>
-                <strong>Имя: </strong> {order.user.name}
-              </p>
-              <p>
-                <strong>Email: </strong>{' '}
-                <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
-              </p>
+              <p><strong>Имя: </strong> {order.user.name}</p>
+              <p><strong>Email: </strong> <a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
               <p>
                 <strong>Адрес: </strong>
                 {order.shippingAddress.address}, {order.shippingAddress.city}{' '}
                 {order.shippingAddress.postalCode}, {order.shippingAddress.country}
               </p>
-              
-              {/* Отображаем статус заказа */}
               <div className="mt-3">
                 <strong>Статус: </strong>
                 <Badge bg={getStatusVariant(order.status)} className="ms-2" style={{ fontSize: '1em' }}>
@@ -63,10 +96,7 @@ const OrderPage = () => {
 
             <ListGroup.Item>
               <h2>Способ оплаты</h2>
-              <p>
-                <strong>Метод: </strong>
-                {order.paymentMethod}
-              </p>
+              <p><strong>Метод: </strong> {order.paymentMethod === 'Card' ? 'Кредитная карта' : order.paymentMethod}</p>
               {order.isPaid ? (
                 <Message variant="success">Оплачено {new Date(order.paidAt).toLocaleDateString()}</Message>
               ) : (
@@ -85,7 +115,7 @@ const OrderPage = () => {
                       <Row>
                         <Col md={1}>
                           <Image
-                            src={item.image}
+                            src={getImageSrc(item.image)}
                             alt={item.name}
                             fluid
                             rounded
@@ -111,30 +141,25 @@ const OrderPage = () => {
               <ListGroup.Item>
                 <h2>Сводка по заказу</h2>
               </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Товары:</Col>
-                  <Col>${order.itemsPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Доставка:</Col>
-                  <Col>${order.shippingPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Налог:</Col>
-                  <Col>${order.taxPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Итого:</Col>
-                  <Col>${order.totalPrice}</Col>
-                </Row>
-              </ListGroup.Item>
+              <ListGroup.Item><Row><Col>Товары:</Col><Col>${order.itemsPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>Доставка:</Col><Col>${order.shippingPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>Налог:</Col><Col>${order.taxPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>Итого:</Col><Col>${order.totalPrice}</Col></Row></ListGroup.Item>
+              
+              {/* Блок оплаты Stripe */}
+              {!order.isPaid && order.paymentMethod === 'Card' && (
+                <ListGroup.Item>
+                  {configError && <Message variant="danger">Ошибка загрузки Stripe: {JSON.stringify(configError)}</Message>}
+
+                  {loadingConfig ? <Loader /> : clientSecret && stripePromise ? (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <CheckoutForm orderId={order._id} clientSecret={clientSecret} />
+                    </Elements>
+                  ) : (
+                    <Loader />
+                  )}
+                </ListGroup.Item>
+              )}
             </ListGroup>
           </Card>
         </Col>

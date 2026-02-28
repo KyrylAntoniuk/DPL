@@ -23,7 +23,6 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       providesTags: ['Order'],
       keepUnusedDataFor: 5,
     }),
-    // --- Admin/Manager ---
     getOrders: builder.query({
       query: () => ({
         url: ORDERS_URL,
@@ -31,11 +30,32 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       providesTags: ['Order'],
       keepUnusedDataFor: 5,
     }),
-    updateOrderStatus: builder.mutation({ // <-- Новая мутация
+    updateOrderStatus: builder.mutation({
       query: (data) => ({
         url: `${ORDERS_URL}/${data.orderId}/status`,
         method: 'PUT',
         body: { status: data.status },
+      }),
+      invalidatesTags: ['Order'],
+    }),
+    // --- Stripe ---
+    getStripePublishableKey: builder.query({
+      query: () => ({
+        url: '/api/config/stripe',
+      }),
+    }),
+    createPaymentIntent: builder.mutation({
+      query: (data) => ({
+        url: '/api/create-payment-intent',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    payOrder: builder.mutation({
+      query: ({ orderId, details }) => ({
+        url: `${ORDERS_URL}/${orderId}/pay`,
+        method: 'PUT',
+        body: details,
       }),
       invalidatesTags: ['Order'],
     }),
@@ -47,5 +67,8 @@ export const {
   useGetOrderByIdQuery,
   useGetMyOrdersQuery,
   useGetOrdersQuery,
-  useUpdateOrderStatusMutation, // <-- Экспорт
+  useUpdateOrderStatusMutation,
+  useGetStripePublishableKeyQuery, // <-- Экспорт
+  useCreatePaymentIntentMutation, // <-- Экспорт
+  usePayOrderMutation, // <-- Экспорт
 } = ordersApiSlice;
