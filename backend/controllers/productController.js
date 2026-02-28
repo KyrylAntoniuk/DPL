@@ -52,6 +52,16 @@ const getProductCategories = asyncHandler(async (req, res) => {
   res.json(categories);
 });
 
+// @desc    Получить доступные фильтры для товаров
+// @route   GET /api/products/filters
+// @access  Public
+const getProductFilters = asyncHandler(async (req, res) => {
+  const queryParams = { ...req.query };
+  const products = await Product.find(queryParams);
+  const brands = [...new Set(products.map(p => p.brand))];
+  res.json({ brands });
+});
+
 
 // @desc    Получить информацию о конкретном товаре по ID
 // @route   GET /api/products/:id
@@ -60,7 +70,11 @@ const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
-    res.json(product);
+    // Находим отзывы для этого товара
+    const reviews = await Review.find({ product: product._id });
+    
+    // Возвращаем объект товара, добавив в него массив отзывов
+    res.json({ ...product.toObject(), reviews });
   } else {
     // Если id корректного формата, но товара нет
     res.status(404);
@@ -171,7 +185,8 @@ const deleteProduct = asyncHandler(async (req, res) => {
 export {
   getProducts,
   getProductById,
-  getProductCategories, // <-- Добавили экспорт
+  getProductCategories,
+  getProductFilters, // <-- Добавили экспорт
   createProductReview,
   createProduct,
   updateProduct,

@@ -9,6 +9,7 @@ import Rating from '../components/Rating';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import FavoriteIcon from '../components/FavoriteIcon';
+import RatingSelect from '../components/RatingSelect'; // Импортируем новый компонент
 import useTitle from '../hooks/useTitle';
 
 const ProductPage = () => {
@@ -177,7 +178,6 @@ const ProductPage = () => {
           <Row className="review mt-4">
             <Col md={6}>
               <h2>Отзывы</h2>
-              {/* ИСПРАВЛЕНО: Добавляем проверку на существование product.reviews */}
               {product.reviews && product.reviews.length === 0 && <Message>Отзывов пока нет</Message>}
               <ListGroup variant="flush">
                 {product.reviews && product.reviews.map((review) => (
@@ -195,14 +195,8 @@ const ProductPage = () => {
                     <Form onSubmit={submitReviewHandler}>
                       <Form.Group controlId="rating" className="my-2">
                         <Form.Label>Оценка</Form.Label>
-                        <Form.Control as="select" required value={rating} onChange={(e) => setRating(e.target.value)}>
-                          <option value="">Выберите...</option>
-                          <option value="1">1 - Ужасно</option>
-                          <option value="2">2 - Плохо</option>
-                          <option value="3">3 - Нормально</option>
-                          <option value="4">4 - Хорошо</option>
-                          <option value="5">5 - Отлично</option>
-                        </Form.Control>
+                        {/* Заменяем Form.Control на RatingSelect */}
+                        <RatingSelect value={rating} onChange={setRating} />
                       </Form.Group>
                       <Form.Group controlId="comment" className="my-2">
                         <Form.Label>Комментарий</Form.Label>
