@@ -30,6 +30,20 @@ export const usersApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    forgotPassword: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: `${USERS_URL}/forgotpassword`,
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    resetPassword: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: `${USERS_URL}/resetpassword/${data.token}`,
+        method: 'PUT',
+        body: data,
+      }),
+    }),
     // --- Favorites ---
     addFavorite: builder.mutation({
       query: (productId) => ({
@@ -81,6 +95,8 @@ export const {
   useRegisterMutation,
   useLogoutMutation,
   useUpdateProfileMutation,
+  useForgotPasswordMutation, // <-- Экспорт
+  useResetPasswordMutation, // <-- Экспорт
   useAddFavoriteMutation,
   useRemoveFavoriteMutation,
   useGetUsersQuery,

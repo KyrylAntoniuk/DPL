@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
+import crypto from 'crypto';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from '../utils/sendEmail.js';
 
 // @desc    Авторизация пользователя & получение токена
 // @route   POST /api/users/login
@@ -170,6 +172,88 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Запрос на сброс пароля
+// @route   POST /api/users/forgotpassword
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404);
+    throw new Error('Пользователь с таким email не найден');
+  }
+
+  // Получаем токен сброса
+  const resetToken = user.getResetPasswordToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const resetLink = `${frontendUrl}/resetpassword/${resetToken}`;
+
+  const message = `
+    Вы запросили сброс пароля. Пожалуйста, перейдите по ссылке:
+    \n\n
+    ${resetLink}
+  `;
+
+  const htmlMessage = `
+    <h1>Сброс пароля</h1>
+    <p>Вы запросили сброс пароля. Пожалуйста, перейдите по ссылке ниже:</p>
+    <a href="${resetLink}" clicktracking=off>${resetLink}</a>
+  `;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Сброс пароля - DPL Shop',
+      text: message,
+      html: htmlMessage,
+    });
+
+    res.status(200).json({ success: true, data: 'Письмо отправлено' });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    res.status(500);
+    throw new Error('Не удалось отправить письмо');
+  }
+});
+
+// @desc    Сброс пароля
+// @route   PUT /api/users/resetpassword/:resettoken
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  // Хешируем токен из URL, чтобы сравнить с тем, что в БД
+  const resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(req.params.resettoken)
+    .digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() }, // Проверяем, не истек ли срок
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error('Неверный токен или срок его действия истек');
+  }
+
+  // Устанавливаем новый пароль
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  res.status(200).json({ success: true, data: 'Пароль успешно обновлен' });
+});
+
 // ==========================================
 // АДМИНИСТРАТИВНЫЕ КОНТРОЛЛЕРЫ
 // ==========================================
@@ -253,6 +337,8 @@ export {
   addFavorite,
   removeFavorite,
   updateUserProfile,
+  forgotPassword, // <-- Экспорт
+  resetPassword, // <-- Экспорт
   getUsers,
   getUserById,
   updateUser,

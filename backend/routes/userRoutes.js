@@ -2,7 +2,7 @@ import express from 'express';
 import {
   authUser,
   registerUser,
-  logoutUser, // <-- Импортируем контроллер
+  logoutUser,
   getUserProfile,
   updateUserProfile,
   getUsers,
@@ -11,6 +11,8 @@ import {
   deleteUser,
   addFavorite,
   removeFavorite,
+  forgotPassword, // <-- Импорт
+  resetPassword, // <-- Импорт
 } from '../controllers/userController.js';
 import { protect, admin, manager } from '../middleware/authMiddleware.js';
 
@@ -19,7 +21,9 @@ const router = express.Router();
 // Публичные маршруты
 router.post('/register', registerUser);
 router.post('/login', authUser);
-router.post('/logout', logoutUser); // <-- Добавляем маршрут
+router.post('/logout', logoutUser);
+router.post('/forgotpassword', forgotPassword); // <-- Маршрут
+router.put('/resetpassword/:resettoken', resetPassword); // <-- Маршрут
 
 // Глобальный список пользователей (для Админа и Менеджера)
 router.route('/').get(protect, manager, getUsers);

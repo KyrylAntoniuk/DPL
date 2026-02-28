@@ -6,11 +6,11 @@ import { toast } from 'react-toastify';
 import { useLoginMutation } from '../redux/api/usersApiSlice';
 import { setCredentials } from '../redux/slices/authSlice';
 import Loader from '../components/Loader';
-import FormContainer from '../components/FormContainer'; // Создадим этот компонент для стилизации
+import FormContainer from '../components/FormContainer';
 import useTitle from '../hooks/useTitle';
 
 const LoginPage = () => {
-  useTitle('Вход в аккаунт'); // Устанавливаем заголовок страницы
+  useTitle('Вход в аккаунт');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -21,7 +21,6 @@ const LoginPage = () => {
 
   const { userInfo } = useSelector((state) => state.auth);
 
-  // Если пользователь уже залогинен, перенаправляем его
   useEffect(() => {
     if (userInfo) {
       navigate('/');
@@ -74,6 +73,9 @@ const LoginPage = () => {
       <Row className="py-3">
         <Col>
           Новый пользователь? <Link to="/register">Зарегистрироваться</Link>
+        </Col>
+        <Col className="text-end">
+          <Link to="/forgotpassword">Забыли пароль?</Link>
         </Col>
       </Row>
     </FormContainer>

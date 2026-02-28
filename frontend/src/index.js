@@ -27,6 +27,8 @@ import PlaceOrderPage from './pages/PlaceOrderPage';
 import OrderPage from './pages/OrderPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage'; // Импорт
+import ResetPasswordPage from './pages/ResetPasswordPage'; // Импорт
 
 // Защищенные маршруты
 import PrivateRoute from './components/PrivateRoute';
@@ -39,7 +41,7 @@ import ProductListPage from './pages/admin/ProductListPage';
 import UserListPage from './pages/admin/UserListPage';
 import UserEditPage from './pages/admin/UserEditPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
-import ProductCreatePage from './pages/admin/ProductCreatePage'; // Импортируем новую страницу
+import ProductCreatePage from './pages/admin/ProductCreatePage';
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -54,6 +56,8 @@ const router = createBrowserRouter(
             <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgotpassword" element={<ForgotPasswordPage />} /> {/* Новый маршрут */}
+            <Route path="/resetpassword/:token" element={<ResetPasswordPage />} /> {/* Новый маршрут */}
 
             {/* Приватные маршруты */}
             <Route path="" element={<PrivateRoute />}>
@@ -68,7 +72,7 @@ const router = createBrowserRouter(
             <Route path="" element={<ManagerRoute />}>
                 <Route path="/admin/orders" element={<OrderListPage />} />
                 <Route path="/admin/products" element={<ProductListPage />} />
-                <Route path="/admin/product/create" element={<ProductCreatePage />} /> {/* Новый маршрут */}
+                <Route path="/admin/product/create" element={<ProductCreatePage />} />
                 <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
             </Route>
 

@@ -13,6 +13,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import filterRoutes from './routes/filterRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import deliveryRoutes from './routes/deliveryRoutes.js'; // <-- Импорт
 
 // Импортируем наши новые middleware для обработки ошибок
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -38,6 +39,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/filters', filterRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api/delivery', deliveryRoutes); // <-- Подключаем маршрут доставки
 
 // --- ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ОШИБОК ---
 // Middleware для обработки 404 (несуществующий маршрут)

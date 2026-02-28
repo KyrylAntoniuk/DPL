@@ -59,6 +59,14 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Order'],
     }),
+    // --- Delivery ---
+    calculateDelivery: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: '/api/delivery/calculate',
+        method: 'POST',
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -68,7 +76,8 @@ export const {
   useGetMyOrdersQuery,
   useGetOrdersQuery,
   useUpdateOrderStatusMutation,
-  useGetStripePublishableKeyQuery, // <-- Экспорт
-  useCreatePaymentIntentMutation, // <-- Экспорт
-  usePayOrderMutation, // <-- Экспорт
+  useGetStripePublishableKeyQuery,
+  useCreatePaymentIntentMutation,
+  usePayOrderMutation,
+  useCalculateDeliveryMutation, // <-- Экспорт
 } = ordersApiSlice;
