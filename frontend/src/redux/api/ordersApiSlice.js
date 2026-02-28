@@ -31,10 +31,11 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       providesTags: ['Order'],
       keepUnusedDataFor: 5,
     }),
-    deliverOrder: builder.mutation({ // <-- Новая мутация
-      query: (orderId) => ({
-        url: `${ORDERS_URL}/${orderId}/deliver`,
+    updateOrderStatus: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: `${ORDERS_URL}/${data.orderId}/status`,
         method: 'PUT',
+        body: { status: data.status },
       }),
       invalidatesTags: ['Order'],
     }),
@@ -46,5 +47,5 @@ export const {
   useGetOrderByIdQuery,
   useGetMyOrdersQuery,
   useGetOrdersQuery,
-  useDeliverOrderMutation, // <-- Экспорт
+  useUpdateOrderStatusMutation, // <-- Экспорт
 } = ordersApiSlice;

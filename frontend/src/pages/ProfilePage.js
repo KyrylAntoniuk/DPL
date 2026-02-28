@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Form, Button, Row, Col, Tab, Nav } from 'react-bootstrap';
+import { Table, Form, Button, Row, Col, Tab, Nav, Badge } from 'react-bootstrap'; // Добавил Badge
 import { LinkContainer } from 'react-router-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -46,6 +46,18 @@ const ProfilePage = () => {
     }
   };
 
+  // Функция для выбора цвета бейджа в зависимости от статуса
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'Новый': return 'primary';
+      case 'В обработке': return 'info';
+      case 'Отправлен': return 'warning';
+      case 'Доставлен': return 'success';
+      case 'Отменен': return 'danger';
+      default: return 'secondary';
+    }
+  };
+
   return (
     <Row>
       <Col md={3}>
@@ -86,16 +98,42 @@ const ProfilePage = () => {
               <h2>Мои заказы</h2>
               {loadingOrders ? <Loader /> : errorOrders ? <Message variant="danger">{errorOrders?.data?.message || errorOrders.error}</Message> : (
                 <Table striped hover responsive className="table-sm">
-                  <thead><tr><th>ID</th><th>ДАТА</th><th>ИТОГО</th><th>ОПЛАЧЕНО</th><th>ДОСТАВЛЕНО</th><th></th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>ДАТА</th>
+                      <th>ИТОГО</th>
+                      <th>ОПЛАЧЕНО</th>
+                      <th>СТАТУС</th> {/* Заменили ДОСТАВЛЕНО на СТАТУС */}
+                      <th></th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {orders && orders.map((order) => (
                       <tr key={order._id}>
                         <td>{order._id}</td>
                         <td>{order.createdAt.substring(0, 10)}</td>
                         <td>{order.totalPrice}</td>
-                        <td>{order.isPaid ? order.paidAt.substring(0, 10) : <i className="fas fa-times" style={{ color: 'red' }}></i>}</td>
-                        <td>{order.isDelivered ? order.deliveredAt.substring(0, 10) : <i className="fas fa-times" style={{ color: 'red' }}></i>}</td>
-                        <td><LinkContainer to={`/order/${order._id}`}><Button className="btn-sm" variant="light">Детали</Button></LinkContainer></td>
+                        <td>
+                          {order.isPaid ? (
+                            order.paidAt.substring(0, 10)
+                          ) : (
+                            <i className="fas fa-times" style={{ color: 'red' }}></i>
+                          )}
+                        </td>
+                        <td>
+                          {/* Отображаем статус заказа */}
+                          <Badge bg={getStatusVariant(order.status)}>
+                            {order.status}
+                          </Badge>
+                        </td>
+                        <td>
+                          <LinkContainer to={`/order/${order._id}`}>
+                            <Button className="btn-sm" variant="light">
+                              Детали
+                            </Button>
+                          </LinkContainer>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -104,7 +142,6 @@ const ProfilePage = () => {
             </Tab.Pane>
             <Tab.Pane eventKey="favorites">
               <h2>Избранное</h2>
-              {/* ИСПРАВЛЕНО: Добавляем проверку, что userInfo.favorites существует и не пустой */}
               {!userInfo?.favorites || userInfo.favorites.length === 0 ? (
                 <Message>Список избранного пуст</Message>
               ) : (

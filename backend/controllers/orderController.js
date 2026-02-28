@@ -83,15 +83,19 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Обновить статус заказа на "Доставлен"
-// @route   PUT /api/orders/:id/deliver
+// @desc    Обновить статус заказа
+// @route   PUT /api/orders/:id/status
 // @access  Private/Manager/Admin
-const updateOrderToDelivered = asyncHandler(async (req, res) => {
+const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
 
   if (order) {
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
+    order.status = req.body.status;
+
+    // Если статус "Доставлен", ставим дату доставки
+    if (req.body.status === 'Доставлен') {
+      order.deliveredAt = Date.now();
+    }
 
     const updatedOrder = await order.save();
     res.json(updatedOrder);
@@ -121,7 +125,7 @@ export {
   addOrderItems, 
   getOrderById, 
   updateOrderToPaid, 
-  updateOrderToDelivered, // <-- Добавили экспорт
+  updateOrderStatus, // <-- Обновили экспорт
   getMyOrders, 
   getOrders
 };

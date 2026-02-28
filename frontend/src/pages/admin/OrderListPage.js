@@ -1,21 +1,21 @@
 import React from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
-import { Table, Button, Badge } from 'react-bootstrap';
+import { Table, Button, Badge, Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
-import { useGetOrdersQuery, useDeliverOrderMutation } from '../../redux/api/ordersApiSlice';
+import { useGetOrdersQuery, useUpdateOrderStatusMutation } from '../../redux/api/ordersApiSlice';
 import useTitle from '../../hooks/useTitle';
 
 const OrderListPage = () => {
   useTitle('Заказы');
   const { data: orders, isLoading, error } = useGetOrdersQuery();
-  const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
+  const [updateOrderStatus, { isLoading: loadingUpdate }] = useUpdateOrderStatusMutation();
 
-  const deliverHandler = async (id) => {
+  const statusHandler = async (id, status) => {
     try {
-      await deliverOrder(id);
-      toast.success('Заказ доставлен');
+      await updateOrderStatus({ orderId: id, status });
+      toast.success('Статус заказа обновлен');
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -24,7 +24,7 @@ const OrderListPage = () => {
   return (
     <>
       <h1>Заказы</h1>
-      {loadingDeliver && <Loader />}
+      {loadingUpdate && <Loader />}
       {isLoading ? (
         <Loader />
       ) : error ? (
@@ -38,7 +38,7 @@ const OrderListPage = () => {
               <th>ДАТА</th>
               <th>ИТОГО</th>
               <th>ОПЛАТА</th>
-              <th>ДОСТАВКА</th>
+              <th>СТАТУС</th>
               <th></th>
             </tr>
           </thead>
@@ -57,17 +57,18 @@ const OrderListPage = () => {
                   )}
                 </td>
                 <td>
-                  {order.isDelivered ? (
-                    <Badge bg="success">Доставлено {order.deliveredAt.substring(0, 10)}</Badge>
-                  ) : (
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => deliverHandler(order._id)}
-                    >
-                      Отметить как доставленный
-                    </Button>
-                  )}
+                  <Form.Select 
+                    size="sm" 
+                    value={order.status} 
+                    onChange={(e) => statusHandler(order._id, e.target.value)}
+                    style={{ width: '140px' }}
+                  >
+                    <option value="Новый">Новый</option>
+                    <option value="В обработке">В обработке</option>
+                    <option value="Отправлен">Отправлен</option>
+                    <option value="Доставлен">Доставлен</option>
+                    <option value="Отменен">Отменен</option>
+                  </Form.Select>
                 </td>
                 <td>
                   <LinkContainer to={`/order/${order._id}`}>

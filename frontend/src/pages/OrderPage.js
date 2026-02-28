@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Row, Col, ListGroup, Image, Card } from 'react-bootstrap';
+import { Row, Col, ListGroup, Image, Card, Badge } from 'react-bootstrap'; // Добавил Badge
 import Message from '../components/Message';
 import Loader from '../components/Loader';
 import { useGetOrderByIdQuery } from '../redux/api/ordersApiSlice';
@@ -11,6 +11,18 @@ const OrderPage = () => {
   useTitle(`Заказ ${orderId}`);
 
   const { data: order, isLoading, error } = useGetOrderByIdQuery(orderId);
+
+  // Функция для выбора цвета бейджа в зависимости от статуса
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'Новый': return 'primary';
+      case 'В обработке': return 'info';
+      case 'Отправлен': return 'warning';
+      case 'Доставлен': return 'success';
+      case 'Отменен': return 'danger';
+      default: return 'secondary';
+    }
+  };
 
   return isLoading ? (
     <Loader />
@@ -36,13 +48,17 @@ const OrderPage = () => {
                 {order.shippingAddress.address}, {order.shippingAddress.city}{' '}
                 {order.shippingAddress.postalCode}, {order.shippingAddress.country}
               </p>
-              {order.isDelivered ? (
-                <Message variant="success">
-                  Доставлено {order.deliveredAt}
-                </Message>
-              ) : (
-                <Message variant="danger">Не доставлено</Message>
-              )}
+              
+              {/* Отображаем статус заказа */}
+              <div className="mt-3">
+                <strong>Статус: </strong>
+                <Badge bg={getStatusVariant(order.status)} className="ms-2" style={{ fontSize: '1em' }}>
+                  {order.status}
+                </Badge>
+                {order.status === 'Доставлен' && order.deliveredAt && (
+                   <span className="ms-2 text-muted">({new Date(order.deliveredAt).toLocaleDateString()})</span>
+                )}
+              </div>
             </ListGroup.Item>
 
             <ListGroup.Item>
@@ -52,7 +68,7 @@ const OrderPage = () => {
                 {order.paymentMethod}
               </p>
               {order.isPaid ? (
-                <Message variant="success">Оплачено {order.paidAt}</Message>
+                <Message variant="success">Оплачено {new Date(order.paidAt).toLocaleDateString()}</Message>
               ) : (
                 <Message variant="danger">Не оплачено</Message>
               )}
@@ -69,14 +85,13 @@ const OrderPage = () => {
                       <Row>
                         <Col md={1}>
                           <Image
-                            src={item.image} // ИСПРАВЛЕНО: используем item.image
+                            src={item.image}
                             alt={item.name}
                             fluid
                             rounded
                           />
                         </Col>
                         <Col>
-                          {/* Ссылка на товар должна вести на ID продукта, а не на ID элемента заказа */}
                           <Link to={`/product/${item.product}`}>{item.name}</Link>
                         </Col>
                         <Col md={4}>
@@ -120,7 +135,6 @@ const OrderPage = () => {
                   <Col>${order.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
-              {/* Здесь будет логика для оплаты */}
             </ListGroup>
           </Card>
         </Col>
