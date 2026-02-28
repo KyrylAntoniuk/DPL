@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Row, Col, Image, ListGroup, Card, Button, Form } from 'react-bootstrap';
+import { Row, Col, Image, ListGroup, Card, Button, Form, Table } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useGetProductDetailsQuery, useCreateReviewMutation } from '../redux/api/productsApiSlice';
@@ -9,7 +9,7 @@ import Rating from '../components/Rating';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import FavoriteIcon from '../components/FavoriteIcon';
-import RatingSelect from '../components/RatingSelect'; // Импортируем новый компонент
+import RatingSelect from '../components/RatingSelect';
 import useTitle from '../hooks/useTitle';
 
 const ProductPage = () => {
@@ -28,76 +28,133 @@ const ProductPage = () => {
 
   useTitle(product ? product.name : 'Товар');
 
+  // --- ЛОГИКА РАБОТЫ С ВАРИАНТАМИ ---
+
   const { colorOptions, otherOptions } = useMemo(() => {
     if (!product?.variants) return { colorOptions: [], otherOptions: {} };
+
     const colors = new Set();
     const others = {};
+
     product.variants.forEach(variant => {
-      for (const key in variant.options) {
-        if (key.toLowerCase() === 'цвет' || key.toLowerCase() === 'color') {
-          colors.add(variant.options[key]);
-        } else {
-          if (!others[key]) others[key] = new Set();
-          others[key].add(variant.options[key]);
+      if (variant.options) {
+        // Ищем ключ цвета
+        const colorKey = Object.keys(variant.options).find(k => k.toLowerCase() === 'цвет' || k.toLowerCase() === 'color');
+        
+        if (colorKey) {
+          colors.add(variant.options[colorKey]);
+        }
+
+        // Собираем остальные опции
+        for (const key in variant.options) {
+          if (key.toLowerCase() !== 'color' && key.toLowerCase() !== 'цвет') {
+            if (!others[key]) others[key] = new Set();
+            others[key].add(variant.options[key]);
+          }
         }
       }
     });
+
     for (const key in others) {
       others[key] = Array.from(others[key]);
     }
+
     return { colorOptions: Array.from(colors), otherOptions: others };
   }, [product]);
 
   useEffect(() => {
     if (product?.variants?.length > 0) {
-      const defaultColor = colorOptions[0];
-      const newSelectedOptions = { color: defaultColor };
-      const firstVariantOfColor = product.variants.find(v => v.options.color === defaultColor);
-      if (firstVariantOfColor) {
-        for (const key in otherOptions) {
-          newSelectedOptions[key] = firstVariantOfColor.options[key];
+      const defaultOptions = {};
+      
+      // Если есть цвета, выбираем первый
+      if (colorOptions.length > 0) {
+        const defaultColor = colorOptions[0];
+        const firstVariant = product.variants[0];
+        const colorKey = Object.keys(firstVariant.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+        if (colorKey) {
+            defaultOptions[colorKey] = defaultColor;
         }
       }
-      setSelectedOptions(newSelectedOptions);
+
+      // Заполняем остальные опции из первого подходящего варианта
+      const baseVariant = product.variants.find(v => {
+          if (colorOptions.length === 0) return true;
+          const cKey = Object.keys(v.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+          return v.options[cKey] === colorOptions[0];
+      }) || product.variants[0];
+
+      if (baseVariant && baseVariant.options) {
+        for (const key in baseVariant.options) {
+            const isColor = key.toLowerCase() === 'color' || key.toLowerCase() === 'цвет';
+            if (!isColor) {
+                defaultOptions[key] = baseVariant.options[key];
+            }
+        }
+      }
+      
+      setSelectedOptions(defaultOptions);
     }
-  }, [product, colorOptions, otherOptions]);
+  }, [product, colorOptions]);
 
   const handleOptionSelect = (key, value) => {
     const newOptions = { ...selectedOptions, [key]: value };
-    if (key.toLowerCase() === 'цвет' || key.toLowerCase() === 'color') {
-      for (const otherKey in otherOptions) {
-        const isCurrentOptionValid = product.variants.some(v => v.options.color === value && v.options[otherKey] === newOptions[otherKey]);
-        if (!isCurrentOptionValid) {
-          const firstValidVariant = product.variants.find(v => v.options.color === value);
-          if (firstValidVariant) {
-            newOptions[otherKey] = firstValidVariant.options[otherKey];
-          }
+    
+    if (key.toLowerCase() === 'color' || key.toLowerCase() === 'цвет') {
+        const validVariant = product.variants.find(v => {
+            const cKey = Object.keys(v.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+            return v.options[cKey] === value;
+        });
+
+        if (validVariant) {
+            for (const otherKey in validVariant.options) {
+                const isColor = otherKey.toLowerCase() === 'color' || otherKey.toLowerCase() === 'цвет';
+                if (!isColor) {
+                    newOptions[otherKey] = validVariant.options[otherKey];
+                }
+            }
         }
-      }
     }
+
     setSelectedOptions(newOptions);
     setQty(1);
   };
 
   const currentVariant = useMemo(() => {
-    if (!product?.variants || Object.keys(selectedOptions).length === 0) return product;
-    return product.variants.find(variant => Object.entries(selectedOptions).every(([key, value]) => variant.options[key] === value)) || product;
+    if (!product?.variants || Object.keys(selectedOptions).length === 0) return product?.variants?.[0] || null;
+    return product.variants.find(variant => 
+      Object.entries(selectedOptions).every(([key, value]) => variant.options[key] === value)
+    );
   }, [product, selectedOptions]);
 
   const isOptionAvailable = (key, value) => {
-    if (!selectedOptions.color) return false;
-    return product.variants.some(v => v.options.color === selectedOptions.color && v.options[key] === value);
+    if (key.toLowerCase() === 'color' || key.toLowerCase() === 'цвет') return true;
+
+    const colorKey = Object.keys(selectedOptions).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+    const currentColor = selectedOptions[colorKey];
+
+    if (!currentColor) return true;
+
+    return product.variants.some(v => {
+        const cKey = Object.keys(v.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+        return v.options[cKey] === currentColor && v.options[key] === value;
+    });
   };
 
+  // --- КОНЕЦ ЛОГИКИ ---
+
   const addToCartHandler = () => {
+    const variantToAdd = currentVariant || product.variants?.[0];
+    
+    if (!variantToAdd) return;
+
     const itemToAdd = {
       ...product,
       qty,
-      price: currentVariant.price || product.basePrice,
-      image: currentVariant.image || product.generalImages[0],
-      variantId: currentVariant._id,
-      options: currentVariant.options,
-      countInStock: currentVariant.countInStock,
+      price: variantToAdd.price || product.basePrice,
+      image: variantToAdd.image || product.generalImages[0],
+      variantId: variantToAdd._id,
+      options: variantToAdd.options,
+      countInStock: variantToAdd.countInStock,
     };
     dispatch(addToCart(itemToAdd));
     navigate('/cart');
@@ -118,8 +175,8 @@ const ProductPage = () => {
   };
 
   const currentPrice = currentVariant?.price || product?.basePrice;
-  const currentImage = currentVariant?.image || product?.generalImages[0];
-  const countInStock = currentVariant?.countInStock || 0;
+  const currentImage = currentVariant?.image || product?.generalImages?.[0];
+  const countInStock = currentVariant?.countInStock || (product?.countInStock || 0);
 
   return (
     <>
@@ -136,19 +193,63 @@ const ProductPage = () => {
                 <ListGroup.Item><h3>{product.name}</h3></ListGroup.Item>
                 <ListGroup.Item><Rating value={product.rating} text={`${product.numReviews} отзывов`} /></ListGroup.Item>
                 <ListGroup.Item>Цена: ${currentPrice}</ListGroup.Item>
+                
+                {/* Рендерим выбор цвета */}
                 {colorOptions.length > 0 && (
                   <ListGroup.Item>
                     <h5>Цвет:</h5>
-                    {colorOptions.map(color => <Button key={color} variant={selectedOptions.color === color ? 'primary' : 'outline-secondary'} onClick={() => handleOptionSelect('color', color)} className="me-2 mb-2">{color}</Button>)}
+                    {colorOptions.map(color => {
+                        const colorKey = Object.keys(selectedOptions).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет') || 'Цвет';
+                        return (
+                            <Button 
+                                key={color} 
+                                variant={selectedOptions[colorKey] === color ? 'primary' : 'outline-secondary'} 
+                                onClick={() => handleOptionSelect(colorKey, color)} 
+                                className="me-2 mb-2"
+                            >
+                                {color}
+                            </Button>
+                        );
+                    })}
                   </ListGroup.Item>
                 )}
+
+                {/* Рендерим другие группы опций */}
                 {Object.entries(otherOptions).map(([key, values]) => (
                   <ListGroup.Item key={key}>
                     <h5>{key}:</h5>
-                    {values.map(value => <Button key={value} variant={selectedOptions[key] === value ? 'primary' : 'outline-secondary'} onClick={() => handleOptionSelect(key, value)} className="me-2 mb-2" disabled={!isOptionAvailable(key, value)}>{value}</Button>)}
+                    {values.map(value => (
+                      <Button 
+                        key={value} 
+                        variant={selectedOptions[key] === value ? 'primary' : 'outline-secondary'} 
+                        onClick={() => handleOptionSelect(key, value)} 
+                        className="me-2 mb-2" 
+                        disabled={!isOptionAvailable(key, value)}
+                      >
+                        {value}
+                      </Button>
+                    ))}
                   </ListGroup.Item>
                 ))}
+
                 <ListGroup.Item>Описание: {product.description}</ListGroup.Item>
+                
+                {/* --- ОТОБРАЖЕНИЕ ХАРАКТЕРИСТИК --- */}
+                {product.specifications && product.specifications.length > 0 && (
+                  <ListGroup.Item>
+                    <h5>Характеристики:</h5>
+                    <Table striped bordered hover size="sm">
+                      <tbody>
+                        {product.specifications.map(spec => (
+                          <tr key={spec._id}>
+                            <td>{spec.name}</td>
+                            <td>{spec.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </ListGroup.Item>
+                )}
               </ListGroup>
             </Col>
             <Col md={3}>
@@ -195,7 +296,6 @@ const ProductPage = () => {
                     <Form onSubmit={submitReviewHandler}>
                       <Form.Group controlId="rating" className="my-2">
                         <Form.Label>Оценка</Form.Label>
-                        {/* Заменяем Form.Control на RatingSelect */}
                         <RatingSelect value={rating} onChange={setRating} />
                       </Form.Group>
                       <Form.Group controlId="comment" className="my-2">
