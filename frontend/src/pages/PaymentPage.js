@@ -11,16 +11,16 @@ const PaymentPage = () => {
   useTitle('Способ оплаты');
   const navigate = useNavigate();
   const cart = useSelector((state) => state.cart);
-  const { shippingAddress } = cart;
+  const { shippingAddress, paymentMethod: currentPaymentMethod } = cart;
 
-  // Если адрес доставки не указан, перенаправляем на страницу доставки
   useEffect(() => {
     if (!shippingAddress.address) {
       navigate('/checkout/shipping');
     }
   }, [shippingAddress, navigate]);
 
-  const [paymentMethod, setPaymentMethod] = useState('PayPal');
+  // Устанавливаем начальное значение из Redux или 'Card' по умолчанию
+  const [paymentMethod, setPaymentMethod] = useState(currentPaymentMethod || 'Card');
 
   const dispatch = useDispatch();
 
@@ -41,14 +41,24 @@ const PaymentPage = () => {
             <Form.Check
               type="radio"
               className="my-2"
-              label="PayPal или Кредитная карта"
-              id="PayPal"
+              label="Кредитная карта"
+              id="Card"
               name="paymentMethod"
-              value="PayPal"
-              checked
+              value="Card"
+              checked={paymentMethod === 'Card'}
               onChange={(e) => setPaymentMethod(e.target.value)}
             ></Form.Check>
-            {/* Здесь можно добавить другие способы оплаты */}
+            
+            <Form.Check
+              type="radio"
+              className="my-2"
+              label="Наличными при получении"
+              id="Cash"
+              name="paymentMethod"
+              value="Cash"
+              checked={paymentMethod === 'Cash'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            ></Form.Check>
           </Col>
         </Form.Group>
 

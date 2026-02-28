@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import Message from '../components/Message';
 import Loader from '../components/Loader';
-import ProductCard from '../components/ProductCard'; // Для отображения избранных
+import ProductCard from '../components/ProductCard';
 import { useUpdateProfileMutation } from '../redux/api/usersApiSlice';
 import { useGetMyOrdersQuery } from '../redux/api/ordersApiSlice';
 import { setCredentials } from '../redux/slices/authSlice';
@@ -51,7 +51,6 @@ const ProfilePage = () => {
       <Col md={3}>
         <h2>Профиль</h2>
         <Form onSubmit={submitHandler}>
-          {/* Форма обновления профиля */}
           <Form.Group className="my-2" controlId="name">
             <Form.Label>Имя</Form.Label>
             <Form.Control type="text" placeholder="Введите имя" value={name} onChange={(e) => setName(e.target.value)}></Form.Control>
@@ -87,10 +86,9 @@ const ProfilePage = () => {
               <h2>Мои заказы</h2>
               {loadingOrders ? <Loader /> : errorOrders ? <Message variant="danger">{errorOrders?.data?.message || errorOrders.error}</Message> : (
                 <Table striped hover responsive className="table-sm">
-                  {/* Таблица заказов */}
                   <thead><tr><th>ID</th><th>ДАТА</th><th>ИТОГО</th><th>ОПЛАЧЕНО</th><th>ДОСТАВЛЕНО</th><th></th></tr></thead>
                   <tbody>
-                    {orders.map((order) => (
+                    {orders && orders.map((order) => (
                       <tr key={order._id}>
                         <td>{order._id}</td>
                         <td>{order.createdAt.substring(0, 10)}</td>
@@ -106,7 +104,10 @@ const ProfilePage = () => {
             </Tab.Pane>
             <Tab.Pane eventKey="favorites">
               <h2>Избранное</h2>
-              {userInfo?.favorites?.length === 0 ? <Message>Список избранного пуст</Message> : (
+              {/* ИСПРАВЛЕНО: Добавляем проверку, что userInfo.favorites существует и не пустой */}
+              {!userInfo?.favorites || userInfo.favorites.length === 0 ? (
+                <Message>Список избранного пуст</Message>
+              ) : (
                 <Row>
                   {userInfo.favorites.map(product => (
                     <Col key={product._id} sm={12} md={6} lg={4}>

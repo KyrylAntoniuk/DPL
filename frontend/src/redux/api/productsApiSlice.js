@@ -11,7 +11,7 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       providesTags: ['Product'],
       keepUnusedDataFor: 5,
     }),
-    getProductById: builder.query({
+    getProductDetails: builder.query({
       query: (productId) => ({
         url: `${PRODUCTS_URL}/${productId}`,
       }),
@@ -23,19 +23,18 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 60,
     }),
-    // Новый эндпоинт для получения фильтров
     getProductFilters: builder.query({
       query: (params) => ({
         url: `${PRODUCTS_URL}/filters`,
-        params, // Передаем текущие фильтры (например, категорию)
+        params,
       }),
       keepUnusedDataFor: 60,
     }),
-    // --- Admin/Manager ---
-    createProduct: builder.mutation({
-      query: () => ({
-        url: PRODUCTS_URL,
+    createReview: builder.mutation({
+      query: (data) => ({
+        url: `${PRODUCTS_URL}/${data.productId}/reviews`,
         method: 'POST',
+        body: data,
       }),
       invalidatesTags: ['Product'],
     }),
@@ -44,6 +43,13 @@ export const productsApiSlice = apiSlice.injectEndpoints({
         url: `${PRODUCTS_URL}/${data.productId}`,
         method: 'PUT',
         body: data,
+      }),
+      invalidatesTags: ['Product'],
+    }),
+    createProduct: builder.mutation({
+      query: () => ({
+        url: PRODUCTS_URL,
+        method: 'POST',
       }),
       invalidatesTags: ['Product'],
     }),
@@ -59,10 +65,11 @@ export const productsApiSlice = apiSlice.injectEndpoints({
 
 export const {
   useGetProductsQuery,
-  useGetProductByIdQuery,
+  useGetProductDetailsQuery,
   useGetProductCategoriesQuery,
-  useGetProductFiltersQuery, // Экспортируем новый хук
-  useCreateProductMutation,
+  useGetProductFiltersQuery,
+  useCreateReviewMutation,
   useUpdateProductMutation,
+  useCreateProductMutation,
   useDeleteProductMutation,
 } = productsApiSlice;

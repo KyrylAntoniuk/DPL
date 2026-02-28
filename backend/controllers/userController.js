@@ -61,6 +61,15 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    Выход пользователя / очистка cookie
+// @route   POST /api/users/logout
+// @access  Public
+const logoutUser = asyncHandler(async (req, res) => {
+  // В будущем здесь будет логика очистки httpOnly cookie
+  // res.cookie('jwt', '', { httpOnly: true, expires: new Date(0) });
+  res.status(200).json({ message: 'Выход выполнен успешно' });
+});
+
 // @desc    Получить профиль пользователя
 // @route   GET /api/users/profile
 // @access  Private (только с токеном)
@@ -239,9 +248,10 @@ const deleteUser = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
+  logoutUser,
   getUserProfile,
-  addFavorite, // Обновлено
-  removeFavorite, // Обновлено
+  addFavorite,
+  removeFavorite,
   updateUserProfile,
   getUsers,
   getUserById,
