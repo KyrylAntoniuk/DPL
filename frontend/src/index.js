@@ -26,7 +26,7 @@ import PaymentPage from './pages/PaymentPage';
 import PlaceOrderPage from './pages/PlaceOrderPage';
 import OrderPage from './pages/OrderPage';
 import ProfilePage from './pages/ProfilePage';
-import NotFoundPage from './pages/NotFoundPage'; // 1. Импорт
+import NotFoundPage from './pages/NotFoundPage';
 
 // Защищенные маршруты
 import PrivateRoute from './components/PrivateRoute';
@@ -39,6 +39,7 @@ import ProductListPage from './pages/admin/ProductListPage';
 import UserListPage from './pages/admin/UserListPage';
 import UserEditPage from './pages/admin/UserEditPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
+import ProductCreatePage from './pages/admin/ProductCreatePage'; // Импортируем новую страницу
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -46,7 +47,6 @@ const router = createBrowserRouter(
             {/* Публичные маршруты */}
             <Route index={true} path="/" element={<HomePage />} />
             <Route path="/page/:pageNumber" element={<HomePage />} />
-            {/* 2. Новый маршрут для каталога */}
             <Route path="/catalog/:category" element={<HomePage />} />
             <Route path="/catalog/:category/page/:pageNumber" element={<HomePage />} />
 
@@ -68,6 +68,7 @@ const router = createBrowserRouter(
             <Route path="" element={<ManagerRoute />}>
                 <Route path="/admin/orders" element={<OrderListPage />} />
                 <Route path="/admin/products" element={<ProductListPage />} />
+                <Route path="/admin/product/create" element={<ProductCreatePage />} /> {/* Новый маршрут */}
                 <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
             </Route>
 
@@ -77,7 +78,7 @@ const router = createBrowserRouter(
                 <Route path="/admin/user/:id/edit" element={<UserEditPage />} />
             </Route>
 
-            {/* 3. Fallback маршрут */}
+            {/* Fallback маршрут */}
             <Route path="*" element={<NotFoundPage />} />
         </Route>
     )

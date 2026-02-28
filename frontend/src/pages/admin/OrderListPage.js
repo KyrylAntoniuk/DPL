@@ -1,19 +1,30 @@
 import React from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
-import { Table, Button } from 'react-bootstrap';
-import { FaTimes } from 'react-icons/fa';
+import { Table, Button, Badge } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
-import { useGetOrdersQuery } from '../../redux/api/ordersApiSlice';
+import { useGetOrdersQuery, useDeliverOrderMutation } from '../../redux/api/ordersApiSlice';
 import useTitle from '../../hooks/useTitle';
 
 const OrderListPage = () => {
   useTitle('Заказы');
   const { data: orders, isLoading, error } = useGetOrdersQuery();
+  const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
+
+  const deliverHandler = async (id) => {
+    try {
+      await deliverOrder(id);
+      toast.success('Заказ доставлен');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
 
   return (
     <>
       <h1>Заказы</h1>
+      {loadingDeliver && <Loader />}
       {isLoading ? (
         <Loader />
       ) : error ? (
@@ -26,8 +37,8 @@ const OrderListPage = () => {
               <th>ПОЛЬЗОВАТЕЛЬ</th>
               <th>ДАТА</th>
               <th>ИТОГО</th>
-              <th>ОПЛАЧЕНО</th>
-              <th>ДОСТАВЛЕНО</th>
+              <th>ОПЛАТА</th>
+              <th>ДОСТАВКА</th>
               <th></th>
             </tr>
           </thead>
@@ -40,16 +51,22 @@ const OrderListPage = () => {
                 <td>${order.totalPrice}</td>
                 <td>
                   {order.isPaid ? (
-                    order.paidAt.substring(0, 10)
+                    <Badge bg="success">Оплачено {order.paidAt.substring(0, 10)}</Badge>
                   ) : (
-                    <FaTimes style={{ color: 'red' }} />
+                    <Badge bg="danger">Не оплачено</Badge>
                   )}
                 </td>
                 <td>
                   {order.isDelivered ? (
-                    order.deliveredAt.substring(0, 10)
+                    <Badge bg="success">Доставлено {order.deliveredAt.substring(0, 10)}</Badge>
                   ) : (
-                    <FaTimes style={{ color: 'red' }} />
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm"
+                      onClick={() => deliverHandler(order._id)}
+                    >
+                      Отметить как доставленный
+                    </Button>
                   )}
                 </td>
                 <td>

@@ -1,0 +1,56 @@
+{
+  "_id": {
+    "$oid": "69a2f37dc8f0d912e94fa7fa"
+  },
+  "user": {
+    "$oid": "699f10cfed2fc1c68130ff7b"
+  },
+  "name": "Apple MacBook Pro 16 M3 Max",
+  "brand": "Apple",
+  "category": "Ноутбуки",
+  "description": "Самый мощный MacBook Pro с чипом M3 Max, потрясающим дисплеем Liquid Retina XDR и временем автономной работы до 22 часов.",
+  "basePrice": 3499,
+  "generalImages": [
+    "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp16-spacegray-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"
+  ],
+  "specifications": [
+    {
+      "name": "Процессор",
+      "value": "Apple M3 Max (14 ядер CPU, 30 ядер GPU)"
+    },
+    {
+      "name": "Оперативная память",
+      "value": "36 ГБ"
+    },
+    {
+      "name": "Дисплей",
+      "value": "16.2 дюйма Liquid Retina XDR"
+    }
+  ],
+  "variants": [
+    {
+      "options": {
+        "Color": "Space Gray",
+        "Storage": "512GB SSD"
+      },
+      "price": 3499,
+      "countInStock": 5,
+      "images": [
+        "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp16-spacegray-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"
+      ]
+    },
+    {
+      "options": {
+        "Color": "Silver",
+        "Storage": "1TB SSD"
+      },
+      "price": 3899,
+      "countInStock": 2,
+      "images": [
+        "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp16-silver-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"
+      ]
+    }
+  ],
+  "rating": 0,
+  "numReviews": 0
+}

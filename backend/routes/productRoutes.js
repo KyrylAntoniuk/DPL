@@ -2,9 +2,11 @@ import express from 'express';
 import {
   getProducts,
   getProductById,
-  getProductCategories, // <-- Импортируем новый контроллер
+  getProductCategories,
+  getProductFilters,
   createProductReview,
   createProduct,
+  importProducts, // <-- Импортируем новый контроллер
   updateProduct,
   deleteProduct,
 } from '../controllers/productController.js';
@@ -17,6 +19,10 @@ router.route('/').get(getProducts).post(protect, manager, createProduct);
 
 // ВАЖНО: Маршрут для получения категорий должен быть ДО маршрута /:id
 router.route('/categories').get(getProductCategories);
+router.route('/filters').get(getProductFilters);
+
+// Маршрут для импорта товаров (только админ)
+router.route('/import').post(protect, admin, importProducts);
 
 // Работа с конкретным товаром по ID
 router

@@ -96,26 +96,10 @@ const ProductPage = () => {
     }
   }, [product, colorOptions]);
 
+  // --- ИСПРАВЛЕНО: Максимально простая логика выбора ---
   const handleOptionSelect = (key, value) => {
-    const newOptions = { ...selectedOptions, [key]: value };
-    
-    if (key.toLowerCase() === 'color' || key.toLowerCase() === 'цвет') {
-        const validVariant = product.variants.find(v => {
-            const cKey = Object.keys(v.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
-            return v.options[cKey] === value;
-        });
-
-        if (validVariant) {
-            for (const otherKey in validVariant.options) {
-                const isColor = otherKey.toLowerCase() === 'color' || otherKey.toLowerCase() === 'цвет';
-                if (!isColor) {
-                    newOptions[otherKey] = validVariant.options[otherKey];
-                }
-            }
-        }
-    }
-
-    setSelectedOptions(newOptions);
+    // Просто обновляем выбранную опцию. Никакой автомагии.
+    setSelectedOptions(prev => ({ ...prev, [key]: value }));
     setQty(1);
   };
 
@@ -270,7 +254,7 @@ const ProductPage = () => {
                     </ListGroup.Item>
                   )}
                   <ListGroup.Item>
-                    <Button className="btn-block" type="button" disabled={countInStock === 0} onClick={addToCartHandler}>Добавить в корзину</Button>
+                    <Button className="btn-block" type="button" disabled={!currentVariant || countInStock === 0} onClick={addToCartHandler}>Добавить в корзину</Button>
                   </ListGroup.Item>
                 </ListGroup>
               </Card>

@@ -1,33 +1,27 @@
 import React from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { Table, Button, Row, Col } from 'react-bootstrap';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaFileImport } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import {
   useGetProductsQuery,
-  useCreateProductMutation,
   useDeleteProductMutation,
+  useImportProductsMutation, // Импортируем хук
 } from '../../redux/api/productsApiSlice';
 import useTitle from '../../hooks/useTitle';
 
 const ProductListPage = () => {
   useTitle('Товары');
+  const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useGetProductsQuery({});
-  const [createProduct, { isLoading: loadingCreate }] = useCreateProductMutation();
   const [deleteProduct, { isLoading: loadingDelete }] = useDeleteProductMutation();
+  const [importProducts, { isLoading: loadingImport }] = useImportProductsMutation();
 
-  const createProductHandler = async () => {
-    if (window.confirm('Вы уверены, что хотите создать новый товар?')) {
-      try {
-        await createProduct();
-        refetch();
-        toast.success('Товар создан');
-      } catch (err) {
-        toast.error(err?.data?.message || err.error);
-      }
-    }
+  const createProductHandler = () => {
+    navigate('/admin/product/create');
   };
 
   const deleteHandler = async (id) => {
@@ -42,6 +36,25 @@ const ProductListPage = () => {
     }
   };
 
+  const uploadFileHandler = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        await importProducts(json).unwrap();
+        toast.success('Товары успешно импортированы');
+        refetch();
+      } catch (err) {
+        toast.error('Ошибка импорта: ' + (err?.data?.message || err.message || 'Неверный формат JSON'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null; // Сбрасываем инпут
+  };
+
   return (
     <>
       <Row className="align-items-center">
@@ -49,14 +62,29 @@ const ProductListPage = () => {
           <h1>Товары</h1>
         </Col>
         <Col className="text-end">
+          <input
+            type="file"
+            id="json-upload"
+            style={{ display: 'none' }}
+            accept=".json"
+            onChange={uploadFileHandler}
+          />
+          <Button 
+            className="btn-sm m-3" 
+            variant="outline-primary"
+            onClick={() => document.getElementById('json-upload').click()}
+          >
+            <FaFileImport /> Импорт JSON
+          </Button>
+
           <Button className="btn-sm m-3" onClick={createProductHandler}>
             <FaEdit /> Создать товар
           </Button>
         </Col>
       </Row>
 
-      {loadingCreate && <Loader />}
       {loadingDelete && <Loader />}
+      {loadingImport && <Loader />}
       {isLoading ? (
         <Loader />
       ) : error ? (

@@ -6,43 +6,34 @@ import Review from '../models/reviewModel.js';
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10; // Количество товаров на странице
-  const page = Number(req.query.pageNumber) || 1; // Номер страницы
+  const pageSize = 10;
+  const page = Number(req.query.pageNumber) || 1;
 
-  // --- ДИНАМИЧЕСКАЯ ФИЛЬТРАЦИЯ ---
   const queryParams = { ...req.query };
   const excludedFields = ['keyword', 'pageNumber', 'pageSize', 'sort'];
   excludedFields.forEach((field) => delete queryParams[field]);
 
-  // Создаем объект для поиска в MongoDB
   const filter = {};
 
-  // 1. Поиск по ключевому слову (остается без изменений)
   if (req.query.keyword) {
     filter.name = {
       $regex: req.query.keyword,
-      $options: 'i', // регистронезависимый поиск
+      $options: 'i',
     };
   }
 
-  // 2. Динамическое добавление остальных фильтров (category, brand, ram и т.д.)
   for (const key in queryParams) {
     filter[key] = queryParams[key];
   }
-  // --- КОНЕЦ ДИНАМИЧЕСКОЙ ФИЛЬТРАЦИИ ---
 
-  // Считаем общее количество товаров по фильтру
   const count = await Product.countDocuments(filter);
 
-  // Ищем товары в базе с фильтром, лимитом и пропуском
   const products = await Product.find(filter)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
-  // Возвращаем товары и информацию для пагинации
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
 });
-
 
 // @desc    Получить список уникальных категорий
 // @route   GET /api/products/categories
@@ -62,7 +53,6 @@ const getProductFilters = asyncHandler(async (req, res) => {
   res.json({ brands });
 });
 
-
 // @desc    Получить информацию о конкретном товаре по ID
 // @route   GET /api/products/:id
 // @access  Public
@@ -70,13 +60,9 @@ const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
-    // Находим отзывы для этого товара
     const reviews = await Review.find({ product: product._id });
-    
-    // Возвращаем объект товара, добавив в него массив отзывов
     res.json({ ...product.toObject(), reviews });
   } else {
-    // Если id корректного формата, но товара нет
     res.status(404);
     throw new Error('Товар не найден');
   }
@@ -87,7 +73,6 @@ const createProductReview = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
-    // Проверяем, не оставлял ли уже этот пользователь отзыв
     const alreadyReviewed = await Review.findOne({
       product: product._id,
       user: req.user._id,
@@ -105,7 +90,6 @@ const createProductReview = asyncHandler(async (req, res) => {
       comment,
     });
 
-    // Пересчитываем общий рейтинг товара
     const allReviews = await Review.find({ product: product._id });
     product.numReviews = allReviews.length;
     product.rating =
@@ -123,22 +107,55 @@ const createProductReview = asyncHandler(async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Manager/Admin
 const createProduct = asyncHandler(async (req, res) => {
+  const {
+    name,
+    basePrice,
+    description,
+    generalImages,
+    brand,
+    category,
+    specifications,
+    variants,
+  } = req.body;
+
   const product = new Product({
-    name: 'Новый товар',
-    basePrice: 0,
+    name,
+    basePrice,
     user: req.user._id,
-    generalImages: ['/images/sample.jpg'],
-    brand: 'Бренд',
-    category: 'Категория',
+    generalImages,
+    brand,
+    category,
     countInStock: 0,
     numReviews: 0,
-    description: 'Описание товара',
-    specifications: [],
-    variants: [],
+    description,
+    specifications,
+    variants,
   });
 
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
+});
+
+// @desc    Импорт товаров из JSON
+// @route   POST /api/products/import
+// @access  Private/Admin
+const importProducts = asyncHandler(async (req, res) => {
+  let products = req.body;
+
+  // Если пришел один объект, оборачиваем его в массив
+  if (!Array.isArray(products)) {
+    products = [products];
+  }
+
+  // Добавляем ID пользователя (админа) к каждому товару и удаляем старые ID
+  const productsWithUser = products.map((product) => {
+    const { _id, createdAt, updatedAt, __v, ...rest } = product;
+    return { ...rest, user: req.user._id };
+  });
+
+  await Product.insertMany(productsWithUser);
+
+  res.status(201).json({ message: 'Товары успешно импортированы' });
 });
 
 // @desc    Обновить товар (редактирование)
@@ -181,14 +198,14 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// Не забудь обновить export в самом низу файла!
 export {
   getProducts,
   getProductById,
   getProductCategories,
-  getProductFilters, // <-- Добавили экспорт
+  getProductFilters,
   createProductReview,
   createProduct,
+  importProducts,
   updateProduct,
   deleteProduct,
 };
