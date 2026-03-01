@@ -2,7 +2,7 @@ import asyncHandler from 'express-async-handler';
 import FilterConfig from '../models/filterConfigModel.js';
 import Product from '../models/productModel.js';
 
-// @desc    Получить конфигурацию фильтров
+// @desc    Get filter configuration
 // @route   GET /api/filters/config
 // @access  Public
 const getFilterConfig = asyncHandler(async (req, res) => {
@@ -18,16 +18,14 @@ const getFilterConfig = asyncHandler(async (req, res) => {
   res.json(config);
 });
 
-// @desc    Обновить конфигурацию фильтров
+// @desc    Update filter configuration
 // @route   PUT /api/filters/config
 // @access  Private/Admin
 const updateFilterConfig = asyncHandler(async (req, res) => {
   const { filterableFields } = req.body;
   
   let config = await FilterConfig.findOne();
-  if (!config) {
-    config = new FilterConfig();
-  }
+  if (!config) config = new FilterConfig();
 
   config.filterableFields = filterableFields;
   await config.save();
@@ -41,18 +39,12 @@ const buildMongoFilter = (queryParams) => {
   for (const key in queryParams) {
     if (key.startsWith('specifications.')) {
       const specName = key.split('.')[1];
-      const specValue = queryParams[key];
-      const values = Array.isArray(specValue) ? specValue : [specValue];
+      const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
 
-      if (!filter.specifications) {
-        filter.specifications = { $all: [] };
-      }
+      if (!filter.specifications) filter.specifications = { $all: [] };
 
       filter.specifications.$all.push({
-        $elemMatch: {
-          name: specName,
-          value: { $in: values }
-        }
+        $elemMatch: { name: specName, value: { $in: values } }
       });
     } else if (key === 'brand') {
       const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
@@ -66,7 +58,7 @@ const buildMongoFilter = (queryParams) => {
   return filter;
 };
 
-// @desc    Получить значения для фильтров (динамически)
+// @desc    Get dynamic filter values
 // @route   GET /api/filters
 // @access  Public
 const getFilters = asyncHandler(async (req, res) => {
@@ -84,6 +76,7 @@ const getFilters = asyncHandler(async (req, res) => {
   for (const field of config.filterableFields) {
     let values = [];
 
+    // Exclude current field filter to show all options
     const currentFieldParams = { ...queryParams };
     delete currentFieldParams[field.key];
     
@@ -107,7 +100,7 @@ const getFilters = asyncHandler(async (req, res) => {
 
     if (values.length > 0) {
       filters[field.key] = {
-        label: field.label, // Возвращаем объект { en: ..., ru: ... }
+        label: field.label,
         values: values
       };
     }

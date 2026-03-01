@@ -1,28 +1,23 @@
-// Middleware для обработки несуществующих маршрутов (404)
+// 404 Error Handler
 const notFound = (req, res, next) => {
-  const error = new Error(`Маршрут не найден - ${req.originalUrl}`);
+  const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
-  next(error); // Передаем ошибку дальше, в следующий middleware
+  next(error);
 };
 
-// Глобальный Middleware для обработки всех ошибок
+// Global Error Handler
 const errorHandler = (err, req, res, next) => {
-  // Иногда ошибка может прийти с кодом 200, в этом случае устанавливаем 500
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   let message = err.message;
 
-  // --- СПЕЦИАЛЬНАЯ ОБРАБОТКА ОШИБОК MONGOOSE ---
-  // 1. Ошибка CastError (неверный формат ObjectId)
+  // Mongoose bad ObjectId
   if (err.name === 'CastError' && err.kind === 'ObjectId') {
     statusCode = 404;
-    message = 'Ресурс не найден (неверный ID)';
+    message = 'Resource not found';
   }
-  // (здесь можно добавить обработку других специфичных ошибок Mongoose)
-  // --- КОНЕЦ ОБРАБОТКИ ОШИБОК MONGOOSE ---
 
   res.status(statusCode).json({
-    message: message,
-    // Показываем stack трейс только в режиме разработки
+    message,
     stack: process.env.NODE_ENV === 'production' ? null : err.stack,
   });
 };

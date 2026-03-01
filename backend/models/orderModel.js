@@ -2,26 +2,15 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-    },
+    user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
     orderItems: [
       {
         name: { type: String, required: true },
         qty: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          required: true,
-          ref: 'Product',
-        },
-        variantId: {
-          type: mongoose.Schema.Types.ObjectId,
-        },
-        // Добавляем поле для хранения опций в сыром виде
+        product: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
+        variantId: { type: mongoose.Schema.Types.ObjectId },
         options: { type: Object },
       },
     ],
@@ -33,10 +22,7 @@ const orderSchema = new mongoose.Schema(
       deliveryService: { type: String, required: true },
       branchNumber: { type: String },
     },
-    paymentMethod: {
-      type: String,
-      required: true,
-    },
+    paymentMethod: { type: String, required: true },
     paymentResult: {
       id: { type: String },
       status: { type: String },
@@ -56,9 +42,7 @@ const orderSchema = new mongoose.Schema(
     },
     deliveredAt: { type: Date },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Order = mongoose.model('Order', orderSchema);

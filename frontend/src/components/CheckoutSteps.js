@@ -1,10 +1,10 @@
 import React from 'react';
 import { Nav } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 
 const CheckoutSteps = ({ step1, step2, step3, step4 }) => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
 
   return (
     <Nav className="justify-content-center mb-4">

@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useAddFavoriteMutation, useRemoveFavoriteMutation } from '../redux/api/usersApiSlice';
-import { updateFavorites } from '../redux/slices/authSlice'; // 1. Импорт
+import { updateFavorites } from '../redux/slices/authSlice';
 
 const FavoriteIcon = ({ productId }) => {
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ const FavoriteIcon = ({ productId }) => {
     e.stopPropagation();
 
     if (!userInfo) {
-      toast.info('Пожалуйста, войдите в систему, чтобы добавлять в избранное');
+      toast.info('Please login to add to favorites');
       return;
     }
 
@@ -30,7 +30,6 @@ const FavoriteIcon = ({ productId }) => {
       } else {
         updatedFavorites = await addFavorite(productId).unwrap();
       }
-      // 2. Диспатчим экшен для обновления favorites в userInfo
       dispatch(updateFavorites(updatedFavorites));
     } catch (err) {
       toast.error(err?.data?.message || err.error);

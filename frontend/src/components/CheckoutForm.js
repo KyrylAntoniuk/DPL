@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import { usePayOrderMutation } from '../redux/api/ordersApiSlice';
 import Loader from './Loader';
 
 const CheckoutForm = ({ orderId, clientSecret }) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { t } = useTranslation(); // Хук
-  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+  const { t } = useTranslation();
+  const [payOrder] = usePayOrderMutation();
 
   const [message, setMessage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -21,32 +21,24 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('CheckoutForm: handleSubmit called');
 
-    if (!stripe || !elements) {
-      console.log('CheckoutForm: Stripe or Elements not loaded');
-      return;
-    }
+    if (!stripe || !elements) return;
 
     setIsProcessing(true);
 
     try {
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/order/${orderId}`,
-        },
+        confirmParams: { return_url: `${window.location.origin}/order/${orderId}` },
         redirect: 'if_required',
       });
 
       if (error) {
-        console.log('CheckoutForm: Payment error', error);
         setMessage(error.message);
         toast.error(error.message);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('CheckoutForm: Payment succeeded', paymentIntent);
-        setMessage(t('payment.success')); // Перевод
-        toast.success(t('payment.success')); // Перевод
+        setMessage(t('payment.success'));
+        toast.success(t('payment.success'));
         
         await payOrder({
           orderId,
@@ -57,13 +49,10 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
             email_address: paymentIntent.receipt_email,
           },
         }).unwrap();
-        console.log('CheckoutForm: Order updated in DB');
       } else {
-        console.log('CheckoutForm: Unexpected state', paymentIntent);
-        setMessage(t('payment.unexpected')); // Перевод
+        setMessage(t('payment.unexpected'));
       }
     } catch (err) {
-      console.error('CheckoutForm: Exception', err);
       toast.error(err.message || t('common.error'));
     }
 

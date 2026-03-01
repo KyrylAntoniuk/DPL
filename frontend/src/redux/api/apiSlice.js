@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { toast } from 'react-toastify'; // 1. Импорт
+import { toast } from 'react-toastify';
 import { BASE_URL } from '../../utils/constants';
 import { logout } from '../slices/authSlice';
 
@@ -18,14 +18,12 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error) {
-    // Если получаем ошибку 401 (Unauthorized), разлогиниваем пользователя
     if (result.error.status === 401) {
       console.error('Unauthorized access - logging out');
       api.dispatch(logout());
-      toast.info('Ваша сессия истекла. Пожалуйста, войдите снова.');
+      toast.info('Session expired. Please login again.');
     } else {
-      // 2. Для всех остальных ошибок показываем всплывающее уведомление
-      const errorMessage = result.error.data?.message || 'Произошла непредвиденная ошибка';
+      const errorMessage = result.error.data?.message || 'An unexpected error occurred';
       toast.error(errorMessage);
     }
   }

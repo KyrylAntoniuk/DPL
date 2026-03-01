@@ -1,21 +1,16 @@
-import React, { Suspense } from 'react'; // Импорт Suspense
+import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-import {
-    createBrowserRouter,
-    createRoutesFromElements,
-    Route,
-    RouterProvider,
-} from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Route, RouterProvider } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
-import './i18n'; // Импорт конфигурации i18n
+import './i18n';
 
-// Стили
+// Styles
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './scss/global.scss';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Компоненты
+// Components
 import App from './App';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
@@ -30,14 +25,14 @@ import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
-import Loader from './components/Loader'; // Импорт Loader
+import Loader from './components/Loader';
 
-// Защищенные маршруты
+// Protected Routes
 import PrivateRoute from './components/PrivateRoute';
 import ManagerRoute from './components/ManagerRoute';
 import AdminRoute from './components/AdminRoute';
 
-// Страницы админки
+// Admin Pages
 import OrderListPage from './pages/admin/OrderListPage';
 import ProductListPage from './pages/admin/ProductListPage';
 import UserListPage from './pages/admin/UserListPage';
@@ -49,7 +44,7 @@ import FilterConfigPage from './pages/admin/FilterConfigPage';
 const router = createBrowserRouter(
     createRoutesFromElements(
         <Route path="/" element={<App />}>
-            {/* Публичные маршруты */}
+            {/* Public Routes */}
             <Route index={true} path="/" element={<HomePage />} />
             <Route path="/page/:pageNumber" element={<HomePage />} />
             <Route path="/catalog/:category" element={<HomePage />} />
@@ -62,7 +57,7 @@ const router = createBrowserRouter(
             <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
             <Route path="/resetpassword/:token" element={<ResetPasswordPage />} />
 
-            {/* Приватные маршруты */}
+            {/* Private Routes */}
             <Route path="" element={<PrivateRoute />}>
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/checkout/shipping" element={<ShippingPage />} />
@@ -71,7 +66,7 @@ const router = createBrowserRouter(
                 <Route path="/order/:id" element={<OrderPage />} />
             </Route>
 
-            {/* Маршруты для Менеджера и Админа */}
+            {/* Manager/Admin Routes */}
             <Route path="" element={<ManagerRoute />}>
                 <Route path="/admin/orders" element={<OrderListPage />} />
                 <Route path="/admin/products" element={<ProductListPage />} />
@@ -80,13 +75,12 @@ const router = createBrowserRouter(
                 <Route path="/admin/filters" element={<FilterConfigPage />} />
             </Route>
 
-            {/* Маршруты только для Админа */}
+            {/* Admin Only Routes */}
             <Route path="" element={<AdminRoute />}>
                 <Route path="/admin/users" element={<UserListPage />} />
                 <Route path="/admin/user/:id/edit" element={<UserEditPage />} />
             </Route>
 
-            {/* Fallback маршрут */}
             <Route path="*" element={<NotFoundPage />} />
         </Route>
     )

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Form, Button, Row, Col, Card } from 'react-bootstrap';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import Loader from '../../components/Loader';
 import FormContainer from '../../components/FormContainer';
 import { useCreateProductMutation } from '../../redux/api/productsApiSlice';
@@ -20,29 +20,23 @@ const VariantOptions = ({ variantIndex, control, register, t }) => {
         <Row key={field.id} className="mb-2 align-items-center">
           <Col md={5}>
             <Form.Control
-              type="text"
-              placeholder={t('admin.addOption')} // Используем перевод
+              type="text" placeholder={t('admin.addOption')}
               {...register(`variants.${variantIndex}.options.${optionIndex}.key`)}
             />
           </Col>
           <Col md={5}>
             <Form.Control
-              type="text"
-              placeholder="Value"
+              type="text" placeholder="Value"
               {...register(`variants.${variantIndex}.options.${optionIndex}.value`)}
             />
           </Col>
           <Col md={2}>
-            <Button variant="danger" size="sm" onClick={() => remove(optionIndex)}>
-              &times;
-            </Button>
+            <Button variant="danger" size="sm" onClick={() => remove(optionIndex)}>&times;</Button>
           </Col>
         </Row>
       ))}
       <Button
-        type="button"
-        variant="outline-secondary"
-        size="sm"
+        type="button" variant="outline-secondary" size="sm"
         onClick={() => append({ key: '', value: '' })}
       >
         {t('admin.addOption')}
@@ -52,31 +46,18 @@ const VariantOptions = ({ variantIndex, control, register, t }) => {
 };
 
 const ProductCreatePage = () => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [createProduct, { isLoading: loadingCreate }] = useCreateProductMutation();
 
   const { register, handleSubmit, control } = useForm({
     defaultValues: {
-      name: '',
-      basePrice: 0,
-      brand: '',
-      category: '',
-      description: '',
-      specifications: [],
-      variants: [],
+      name: '', basePrice: 0, brand: '', category: '', description: '', specifications: [], variants: [],
     },
   });
 
-  const { fields: specFields, append: appendSpec, remove: removeSpec } = useFieldArray({
-    control,
-    name: 'specifications',
-  });
-
-  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
-    control,
-    name: 'variants',
-  });
+  const { fields: specFields, append: appendSpec, remove: removeSpec } = useFieldArray({ control, name: 'specifications' });
+  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({ control, name: 'variants' });
 
   const onSubmit = async (data) => {
     const transformedData = {
@@ -101,9 +82,7 @@ const ProductCreatePage = () => {
 
   return (
     <>
-      <Link to="/admin/products" className="btn btn-light my-3">
-        {t('common.back')}
-      </Link>
+      <Link to="/admin/products" className="btn btn-light my-3">{t('common.back')}</Link>
       <FormContainer>
         <h1>{t('admin.createProductTitle')}</h1>
         {loadingCreate && <Loader />}
@@ -165,9 +144,7 @@ const ProductCreatePage = () => {
             </Button>
           </div>
 
-          <Button type="submit" variant="primary" className="mt-3">
-            {t('common.create')}
-          </Button>
+          <Button type="submit" variant="primary" className="mt-3">{t('common.create')}</Button>
         </Form>
       </FormContainer>
     </>

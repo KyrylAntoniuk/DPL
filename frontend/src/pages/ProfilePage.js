@@ -33,12 +33,8 @@ const ProfilePage = () => {
         <h2 className="mb-4">{t('profile.title')}</h2>
         <Tab.Container id="profile-tabs" defaultActiveKey="orders">
           <Nav variant="pills" className="mb-3">
-            <Nav.Item>
-              <Nav.Link eventKey="orders">{t('profile.myOrders')}</Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link eventKey="favorites">{t('profile.favorites')}</Nav.Link>
-            </Nav.Item>
+            <Nav.Item><Nav.Link eventKey="orders">{t('profile.myOrders')}</Nav.Link></Nav.Item>
+            <Nav.Item><Nav.Link eventKey="favorites">{t('profile.favorites')}</Nav.Link></Nav.Item>
           </Nav>
           <Tab.Content>
             <Tab.Pane eventKey="orders">
@@ -61,22 +57,12 @@ const ProfilePage = () => {
                         <td>{order.createdAt.substring(0, 10)}</td>
                         <td>{order.totalPrice}</td>
                         <td>
-                          {order.isPaid ? (
-                            order.paidAt.substring(0, 10)
-                          ) : (
-                            <i className="fas fa-times" style={{ color: 'red' }}></i>
-                          )}
+                          {order.isPaid ? order.paidAt.substring(0, 10) : <i className="fas fa-times" style={{ color: 'red' }}></i>}
                         </td>
-                        <td>
-                          <Badge bg={getStatusVariant(order.status)}>
-                            {order.status}
-                          </Badge>
-                        </td>
+                        <td><Badge bg={getStatusVariant(order.status)}>{order.status}</Badge></td>
                         <td>
                           <LinkContainer to={`/order/${order._id}`}>
-                            <Button className="btn-sm" variant="light">
-                              {t('profile.details')}
-                            </Button>
+                            <Button className="btn-sm" variant="light">{t('profile.details')}</Button>
                           </LinkContainer>
                         </td>
                       </tr>

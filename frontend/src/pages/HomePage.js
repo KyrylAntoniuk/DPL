@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Row, Col, Button, Offcanvas } from 'react-bootstrap';
-import { FaFilter } from 'react-icons/fa'; // Импорт иконки
+import { FaFilter } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useGetProductsQuery } from '../redux/api/productsApiSlice';
 import ProductCard from '../components/ProductCard';
@@ -17,7 +17,6 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Состояние для мобильного меню фильтров
   const [showFilters, setShowFilters] = useState(false);
 
   const queryParams = {
@@ -27,16 +26,10 @@ const HomePage = () => {
 
   for (const [key, value] of searchParams.entries()) {
     const values = searchParams.getAll(key);
-    if (values.length > 1) {
-      queryParams[key] = values;
-    } else {
-      queryParams[key] = value;
-    }
+    queryParams[key] = values.length > 1 ? values : value;
   }
 
-  if (category) {
-    queryParams.category = category;
-  }
+  if (category) queryParams.category = category;
 
   useEffect(() => {
     console.log('Query Params sent to backend:', queryParams);
@@ -49,25 +42,17 @@ const HomePage = () => {
   const handleSetFilters = (newFilters) => {
     const params = {};
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value && value.length > 0) {
-        params[key] = value;
-      }
+      if (value && value.length > 0) params[key] = value;
     });
     
     setSearchParams(params);
 
     if (pageNumber && pageNumber !== '1') {
       let newPath = '/';
-      if (category) {
-        newPath = `/catalog/${category}`;
-      } else if (keyword) {
-        newPath = `/search/${keyword}`;
-      }
+      if (category) newPath = `/catalog/${category}`;
+      else if (keyword) newPath = `/search/${keyword}`;
       
-      navigate({
-        pathname: newPath,
-        search: new URLSearchParams(params).toString()
-      });
+      navigate({ pathname: newPath, search: new URLSearchParams(params).toString() });
     }
   };
 
@@ -80,52 +65,36 @@ const HomePage = () => {
 
   return (
     <Row>
-      {/* ДЕСКТОП: Сайдбар (скрыт на мобильных) */}
+      {/* Desktop Sidebar */}
       <Col md={3} className="d-none d-md-block">
-        <FilterSidebar 
-          filters={filters} 
-          setFilters={handleSetFilters} 
-        />
+        <FilterSidebar filters={filters} setFilters={handleSetFilters} />
       </Col>
 
       <Col md={9}>
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h1>{t('home.title')}</h1>
           
-          {/* МОБИЛЬНЫЕ: Кнопка фильтров (видна только на мобильных) */}
-          <Button 
-            variant="outline-dark" 
-            className="d-md-none" 
-            onClick={() => setShowFilters(true)}
-          >
+          {/* Mobile Filter Button */}
+          <Button variant="outline-dark" className="d-md-none" onClick={() => setShowFilters(true)}>
             <FaFilter /> {t('header.filters')}
           </Button>
         </div>
 
-        {/* МОБИЛЬНЫЕ: Выезжающая панель */}
+        {/* Mobile Sidebar */}
         <Offcanvas show={showFilters} onHide={() => setShowFilters(false)} placement="start">
           <Offcanvas.Header closeButton>
             <Offcanvas.Title>{t('header.filters')}</Offcanvas.Title>
           </Offcanvas.Header>
           <Offcanvas.Body>
-            <FilterSidebar 
-              filters={filters} 
-              setFilters={handleSetFilters} 
-            />
+            <FilterSidebar filters={filters} setFilters={handleSetFilters} />
           </Offcanvas.Body>
         </Offcanvas>
 
-        {isLoading ? (
-          <Loader />
-        ) : error ? (
-          <Message variant="danger">
-            {error?.data?.message || error.error}
-          </Message>
+        {isLoading ? <Loader /> : error ? (
+          <Message variant="danger">{error?.data?.message || error.error}</Message>
         ) : (
           <>
-            {data.products.length === 0 ? (
-              <Message>{t('home.noProducts')}</Message>
-            ) : (
+            {data.products.length === 0 ? <Message>{t('home.noProducts')}</Message> : (
               <Row>
                 {data.products.map((product) => (
                   <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
@@ -135,12 +104,7 @@ const HomePage = () => {
               </Row>
             )}
             <div className="d-flex justify-content-center mt-4">
-              <Paginate
-                pages={data.pages}
-                page={data.page}
-                keyword={keyword ? keyword : ''}
-                category={category ? category : ''}
-              />
+              <Paginate pages={data.pages} page={data.page} keyword={keyword} category={category} />
             </div>
           </>
         )}

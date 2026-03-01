@@ -3,20 +3,18 @@ import { Link, useParams } from 'react-router-dom';
 import { Row, Col, ListGroup, Image, Card, Badge } from 'react-bootstrap';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import Message from '../components/Message';
 import Loader from '../components/Loader';
 import CheckoutForm from '../components/CheckoutForm';
 import { 
-  useGetOrderByIdQuery, 
-  useGetStripePublishableKeyQuery, 
-  useCreatePaymentIntentMutation 
+  useGetOrderByIdQuery, useGetStripePublishableKeyQuery, useCreatePaymentIntentMutation 
 } from '../redux/api/ordersApiSlice';
 import useTitle from '../hooks/useTitle';
 
 const OrderPage = () => {
   const { id: orderId } = useParams();
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   useTitle(`${t('order.title')} ${orderId}`);
 
   const { data: order, isLoading, error } = useGetOrderByIdQuery(orderId);
@@ -27,18 +25,14 @@ const OrderPage = () => {
   const [stripePromise, setStripePromise] = useState(null);
 
   useEffect(() => {
-    if (stripeConfig && stripeConfig.publishableKey) {
-      setStripePromise(loadStripe(stripeConfig.publishableKey));
-    }
+    if (stripeConfig?.publishableKey) setStripePromise(loadStripe(stripeConfig.publishableKey));
   }, [stripeConfig]);
 
   useEffect(() => {
     if (order && !order.isPaid && order.paymentMethod === 'Card' && !clientSecret) {
       createPaymentIntent({ orderId: order._id })
         .unwrap()
-        .then((res) => {
-            setClientSecret(res.clientSecret);
-        })
+        .then((res) => setClientSecret(res.clientSecret))
         .catch((err) => console.error('Error creating payment intent:', err));
     }
   }, [order, createPaymentIntent, clientSecret]);
@@ -60,9 +54,7 @@ const OrderPage = () => {
     return src;
   };
 
-  return isLoading ? (
-    <Loader />
-  ) : error ? (
+  return isLoading ? <Loader /> : error ? (
     <Message variant="danger">{error?.data?.message || error.error}</Message>
   ) : (
     <>
@@ -102,27 +94,16 @@ const OrderPage = () => {
 
             <ListGroup.Item>
               <h2>{t('placeOrder.orderItems')}</h2>
-              {order.orderItems.length === 0 ? (
-                <Message>{t('cart.empty')}</Message>
-              ) : (
+              {order.orderItems.length === 0 ? <Message>{t('cart.empty')}</Message> : (
                 <ListGroup variant="flush">
                   {order.orderItems.map((item, index) => (
                     <ListGroup.Item key={index}>
                       <Row>
                         <Col md={1}>
-                          <Image
-                            src={getImageSrc(item.image)}
-                            alt={item.name}
-                            fluid
-                            rounded
-                          />
+                          <Image src={getImageSrc(item.image)} alt={item.name} fluid rounded />
                         </Col>
-                        <Col>
-                          <Link to={`/product/${item.product}`}>{item.name}</Link>
-                        </Col>
-                        <Col md={4}>
-                          {item.qty} x ${item.price} = ${(item.qty * item.price).toFixed(2)}
-                        </Col>
+                        <Col><Link to={`/product/${item.product}`}>{item.name}</Link></Col>
+                        <Col md={4}>{item.qty} x ${item.price} = ${(item.qty * item.price).toFixed(2)}</Col>
                       </Row>
                     </ListGroup.Item>
                   ))}
@@ -134,9 +115,7 @@ const OrderPage = () => {
         <Col md={4}>
           <Card>
             <ListGroup variant="flush">
-              <ListGroup.Item>
-                <h2>{t('placeOrder.summary')}</h2>
-              </ListGroup.Item>
+              <ListGroup.Item><h2>{t('placeOrder.summary')}</h2></ListGroup.Item>
               <ListGroup.Item><Row><Col>{t('placeOrder.items')}:</Col><Col>${order.itemsPrice}</Col></Row></ListGroup.Item>
               <ListGroup.Item><Row><Col>{t('shipping.cost')}:</Col><Col>${order.shippingPrice}</Col></Row></ListGroup.Item>
               <ListGroup.Item><Row><Col>{t('placeOrder.tax')}:</Col><Col>${order.taxPrice}</Col></Row></ListGroup.Item>
@@ -145,14 +124,11 @@ const OrderPage = () => {
               {!order.isPaid && order.paymentMethod === 'Card' && (
                 <ListGroup.Item>
                   {configError && <Message variant="danger">Error loading Stripe: {JSON.stringify(configError)}</Message>}
-
                   {loadingConfig ? <Loader /> : clientSecret && stripePromise ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>
                       <CheckoutForm orderId={order._id} clientSecret={clientSecret} />
                     </Elements>
-                  ) : (
-                    <Loader />
-                  )}
+                  ) : <Loader />}
                 </ListGroup.Item>
               )}
             </ListGroup>

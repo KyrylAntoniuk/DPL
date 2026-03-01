@@ -30,11 +30,11 @@ const RatingSelect = ({ value, onChange }) => {
       })}
       <span className="ms-2 text-muted">
         {value ? (
-            value === 1 ? 'Ужасно' :
-            value === 2 ? 'Плохо' :
-            value === 3 ? 'Нормально' :
-            value === 4 ? 'Хорошо' : 'Отлично'
-        ) : 'Выберите оценку'}
+            value === 1 ? 'Terrible' :
+            value === 2 ? 'Bad' :
+            value === 3 ? 'Normal' :
+            value === 4 ? 'Good' : 'Excellent'
+        ) : 'Select Rating'}
       </span>
     </div>
   );

@@ -30,6 +30,8 @@ const ProductPage = () => {
 
   useTitle(product ? product.name : t('home.title'));
 
+  // --- Variant Logic ---
+
   const { colorOptions, otherOptions } = useMemo(() => {
     if (!product?.variants) return { colorOptions: [], otherOptions: {} };
 
@@ -38,11 +40,8 @@ const ProductPage = () => {
 
     product.variants.forEach(variant => {
       if (variant.options) {
-        const colorKey = Object.keys(variant.options).find(k => k.toLowerCase() === 'цвет' || k.toLowerCase() === 'color');
-        
-        if (colorKey) {
-          colors.add(variant.options[colorKey]);
-        }
+        const colorKey = Object.keys(variant.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
+        if (colorKey) colors.add(variant.options[colorKey]);
 
         for (const key in variant.options) {
           if (key.toLowerCase() !== 'color' && key.toLowerCase() !== 'цвет') {
@@ -53,9 +52,7 @@ const ProductPage = () => {
       }
     });
 
-    for (const key in others) {
-      others[key] = Array.from(others[key]);
-    }
+    for (const key in others) others[key] = Array.from(others[key]);
 
     return { colorOptions: Array.from(colors), otherOptions: others };
   }, [product]);
@@ -68,9 +65,7 @@ const ProductPage = () => {
         const defaultColor = colorOptions[0];
         const firstVariant = product.variants[0];
         const colorKey = Object.keys(firstVariant.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
-        if (colorKey) {
-            defaultOptions[colorKey] = defaultColor;
-        }
+        if (colorKey) defaultOptions[colorKey] = defaultColor;
       }
 
       const baseVariant = product.variants.find(v => {
@@ -82,9 +77,7 @@ const ProductPage = () => {
       if (baseVariant && baseVariant.options) {
         for (const key in baseVariant.options) {
             const isColor = key.toLowerCase() === 'color' || key.toLowerCase() === 'цвет';
-            if (!isColor) {
-                defaultOptions[key] = baseVariant.options[key];
-            }
+            if (!isColor) defaultOptions[key] = baseVariant.options[key];
         }
       }
       
@@ -119,9 +112,10 @@ const ProductPage = () => {
     });
   };
 
+  // --- End Variant Logic ---
+
   const addToCartHandler = () => {
     const variantToAdd = currentVariant || product.variants?.[0];
-    
     if (!variantToAdd) return;
 
     const itemToAdd = {
@@ -169,10 +163,7 @@ const ProductPage = () => {
               <ListGroup variant="flush">
                 <ListGroup.Item><h3>{product.name}</h3></ListGroup.Item>
                 <ListGroup.Item>
-                  <Rating 
-                    value={product.rating} 
-                    text={t('product.reviewsCount', { count: product.numReviews })} 
-                  />
+                  <Rating value={product.rating} text={t('product.reviewsCount', { count: product.numReviews })} />
                 </ListGroup.Item>
                 <ListGroup.Item>{t('product.price')}: ${currentPrice}</ListGroup.Item>
                 

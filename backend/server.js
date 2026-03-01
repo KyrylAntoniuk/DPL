@@ -1,58 +1,52 @@
 import express from 'express';
 import dotenv from 'dotenv';
-// Загрузка переменных окружения ДОЛЖНА быть самым первым действием
+// Load env vars first
 dotenv.config();
 
 import cors from 'cors';
 import connectDB from './config/db.js';
 
-// Импортируем маршруты
+// Routes
 import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import filterRoutes from './routes/filterRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
-import deliveryRoutes from './routes/deliveryRoutes.js'; // <-- Импорт
+import deliveryRoutes from './routes/deliveryRoutes.js';
 
-// Импортируем наши новые middleware для обработки ошибок
+// Middleware
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
-// Подключение к базе данных
+// Connect to DB
 connectDB();
 
 const app = express();
 
-// Middleware для обработки JSON и CORS
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Базовый тестовый маршрут
+// Base route
 app.get('/', (req, res) => {
-  res.send('API интернет-магазина работает...');
+  res.send('API is running...');
 });
 
-// Подключаем все маршруты
+// Mount routes
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/filters', filterRoutes);
 app.use('/api', paymentRoutes);
-app.use('/api/delivery', deliveryRoutes); // <-- Подключаем маршрут доставки
+app.use('/api/delivery', deliveryRoutes);
 
-// --- ПОДКЛЮЧЕНИЕ ОБРАБОТЧИКОВ ОШИБОК ---
-// Middleware для обработки 404 (несуществующий маршрут)
-// Должен быть после всех успешных маршрутов
+// Error handling
 app.use(notFound);
-
-// Глобальный обработчик всех ошибок
-// Должен быть самым последним middleware в цепочке
 app.use(errorHandler);
-// --- КОНЕЦ ПОДКЛЮЧЕНИЯ ---
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Сервер запущен в режиме ${process.env.NODE_ENV} на порту ${PORT}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

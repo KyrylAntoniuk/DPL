@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useSelector, useDispatch } from 'react-redux';
-import { useTranslation } from 'react-i18next'; // Импорт хука
+import { useTranslation } from 'react-i18next';
 import { useLogoutMutation } from '../redux/api/usersApiSlice';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
-import LanguageSwitcher from './LanguageSwitcher'; // Импорт переключателя
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { t } = useTranslation(); // Инициализация
+  const { t } = useTranslation();
 
   const [logoutApiCall] = useLogoutMutation();
 
@@ -22,7 +22,7 @@ const Header = () => {
       await logoutApiCall().unwrap();
       dispatch(logout());
       navigate('/login');
-      toast.success(t('header.logoutSuccess') || 'Вы вышли из системы');
+      toast.success(t('header.logoutSuccess') || 'Logged out');
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -38,7 +38,7 @@ const Header = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <LanguageSwitcher /> {/* Переключатель языка */}
+              <LanguageSwitcher />
               
               <LinkContainer to="/cart">
                 <Nav.Link>
@@ -63,7 +63,6 @@ const Header = () => {
                 </LinkContainer>
               )}
 
-              {/* Меню для Админа/Менеджера */}
               {userInfo && (userInfo.role === 'manager' || userInfo.role === 'admin') && (
                 <NavDropdown title={t('header.admin')} id="adminmenu">
                   <LinkContainer to="/admin/products">

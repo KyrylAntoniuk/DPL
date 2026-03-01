@@ -3,20 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Row, Col, ListGroup, Image, Form, Button, Card } from 'react-bootstrap';
 import { FaTrash } from 'react-icons/fa';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import Message from '../components/Message';
 import { addToCart, removeFromCart } from '../redux/slices/cartSlice';
 import useTitle from '../hooks/useTitle';
 
 const CartPage = () => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   useTitle(t('cart.title'));
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const cart = useSelector((state) => state.cart);
   const { cartItems } = cart;
-
   const { userInfo } = useSelector((state) => state.auth);
 
   const addToCartHandler = (product, qty) => {
@@ -28,11 +27,8 @@ const CartPage = () => {
   };
 
   const checkoutHandler = () => {
-    if (userInfo) {
-      navigate('/checkout/shipping');
-    } else {
-      navigate('/login?redirect=/checkout/shipping');
-    }
+    if (userInfo) navigate('/checkout/shipping');
+    else navigate('/login?redirect=/checkout/shipping');
   };
 
   return (
@@ -62,23 +58,16 @@ const CartPage = () => {
                   <Col md={2}>${item.price}</Col>
                   <Col md={2}>
                     <Form.Control
-                      as="select"
-                      value={item.qty}
+                      as="select" value={item.qty}
                       onChange={(e) => addToCartHandler(item, Number(e.target.value))}
                     >
                       {[...Array(item.countInStock).keys()].map((x) => (
-                        <option key={x + 1} value={x + 1}>
-                          {x + 1}
-                        </option>
+                        <option key={x + 1} value={x + 1}>{x + 1}</option>
                       ))}
                     </Form.Control>
                   </Col>
                   <Col md={2}>
-                    <Button
-                      type="button"
-                      variant="light"
-                      onClick={() => removeFromCartHandler(item._id, item.variantId)}
-                    >
+                    <Button type="button" variant="light" onClick={() => removeFromCartHandler(item._id, item.variantId)}>
                       <FaTrash />
                     </Button>
                   </Col>
@@ -92,18 +81,11 @@ const CartPage = () => {
         <Card>
           <ListGroup variant="flush">
             <ListGroup.Item>
-              <h2>
-                {t('cart.subtotal')} ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) {t('cart.items')}
-              </h2>
+              <h2>{t('cart.subtotal')} ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) {t('cart.items')}</h2>
               ${cart.totalPrice}
             </ListGroup.Item>
             <ListGroup.Item>
-              <Button
-                type="button"
-                className="btn-block"
-                disabled={cartItems.length === 0}
-                onClick={checkoutHandler}
-              >
+              <Button type="button" className="btn-block" disabled={cartItems.length === 0} onClick={checkoutHandler}>
                 {t('cart.checkout')}
               </Button>
             </ListGroup.Item>

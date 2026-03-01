@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 const AdminRoute = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
-  // Проверяем, что пользователь авторизован и является администратором
   return userInfo && userInfo.role === 'admin' ? (
     <Outlet />
   ) : (

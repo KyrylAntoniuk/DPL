@@ -3,18 +3,13 @@ import Product from '../models/productModel.js';
 import Review from '../models/reviewModel.js';
 import FilterConfig from '../models/filterConfigModel.js';
 
-// --- Вспомогательная функция для авто-обновления конфига фильтров ---
+// Update filter config based on product specifications
 const updateFilterConfigFromProduct = async (product) => {
-  if (!product.specifications || product.specifications.length === 0) return;
+  if (!product.specifications?.length) return;
 
   let config = await FilterConfig.findOne();
   if (!config) {
-    config = new FilterConfig({ 
-      filterableFields: [{ 
-        key: 'brand', 
-        label: { en: 'Brand', uk: 'Бренд' } // uk
-      }] 
-    });
+    config = new FilterConfig({ filterableFields: [{ key: 'brand', label: { en: 'Brand', uk: 'Бренд' } }] });
   }
 
   let isModified = false;
@@ -26,23 +21,16 @@ const updateFilterConfigFromProduct = async (product) => {
     if (!exists) {
       config.filterableFields.push({
         key: key,
-        label: {
-          en: spec.name,
-          uk: spec.name, // uk
-        },
+        label: { en: spec.name, uk: spec.name },
       });
       isModified = true;
     }
   });
 
-  if (isModified) {
-    await config.save();
-  }
+  if (isModified) await config.save();
 };
 
-// ... (остальной код без изменений)
-
-// @desc    Получить список всех товаров с фильтрацией и пагинацией
+// @desc    Fetch all products with filtering and pagination
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
@@ -56,27 +44,20 @@ const getProducts = asyncHandler(async (req, res) => {
   const filter = {};
 
   if (req.query.keyword) {
-    filter.name = {
-      $regex: req.query.keyword,
-      $options: 'i',
-    };
+    filter.name = { $regex: req.query.keyword, $options: 'i' };
   }
 
+  // Build filter object
   for (const key in queryParams) {
     if (key.startsWith('specifications.')) {
       const specName = key.split('.')[1];
-      const specValue = queryParams[key];
-      const values = Array.isArray(specValue) ? specValue : [specValue];
+      const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
 
-      if (!filter.specifications) {
-        filter.specifications = { $all: [] };
-      }
+      if (!filter.specifications) filter.specifications = { $all: [] };
 
+      // Filter by specification name and value(s)
       filter.specifications.$all.push({
-        $elemMatch: {
-          name: specName,
-          value: { $in: values }
-        }
+        $elemMatch: { name: specName, value: { $in: values } }
       });
 
     } else if (key === 'brand') {
@@ -90,7 +71,6 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const count = await Product.countDocuments(filter);
-
   const products = await Product.find(filter)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
@@ -98,7 +78,7 @@ const getProducts = asyncHandler(async (req, res) => {
   res.json({ products, page, pages: Math.ceil(count / pageSize) });
 });
 
-// @desc    Получить список уникальных категорий
+// @desc    Get unique categories
 // @route   GET /api/products/categories
 // @access  Public
 const getProductCategories = asyncHandler(async (req, res) => {
@@ -106,7 +86,7 @@ const getProductCategories = asyncHandler(async (req, res) => {
   res.json(categories);
 });
 
-// @desc    Получить доступные фильтры для товаров
+// @desc    Get available filters
 // @route   GET /api/products/filters
 // @access  Public
 const getProductFilters = asyncHandler(async (req, res) => {
@@ -116,7 +96,7 @@ const getProductFilters = asyncHandler(async (req, res) => {
   res.json({ brands });
 });
 
-// @desc    Получить информацию о конкретном товаре по ID
+// @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
@@ -127,10 +107,13 @@ const getProductById = asyncHandler(async (req, res) => {
     res.json({ ...product.toObject(), reviews });
   } else {
     res.status(404);
-    throw new Error('Товар не найден');
+    throw new Error('Product not found');
   }
 });
 
+// @desc    Create new review
+// @route   POST /api/products/:id/reviews
+// @access  Private
 const createProductReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
   const product = await Product.findById(req.params.id);
@@ -143,7 +126,7 @@ const createProductReview = asyncHandler(async (req, res) => {
 
     if (alreadyReviewed) {
       res.status(400);
-      throw new Error('Вы уже оставили отзыв к этому товару');
+      throw new Error('Product already reviewed');
     }
 
     const review = await Review.create({
@@ -155,44 +138,27 @@ const createProductReview = asyncHandler(async (req, res) => {
 
     const allReviews = await Review.find({ product: product._id });
     product.numReviews = allReviews.length;
-    product.rating =
-      allReviews.reduce((acc, item) => item.rating + acc, 0) / allReviews.length;
+    product.rating = allReviews.reduce((acc, item) => item.rating + acc, 0) / allReviews.length;
 
     await product.save();
-    res.status(201).json({ message: 'Отзыв добавлен', review });
+    res.status(201).json({ message: 'Review added', review });
   } else {
     res.status(404);
-    throw new Error('Товар не найден');
+    throw new Error('Product not found');
   }
 });
 
-// @desc    Создать новый товар
+// @desc    Create a product
 // @route   POST /api/products
-// @access  Private/Manager/Admin
+// @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
   const {
-    name,
-    basePrice,
-    description,
-    generalImages,
-    brand,
-    category,
-    specifications,
-    variants,
+    name, basePrice, description, generalImages, brand, category, specifications, variants,
   } = req.body;
 
   const product = new Product({
-    name,
-    basePrice,
-    user: req.user._id,
-    generalImages,
-    brand,
-    category,
-    countInStock: 0,
-    numReviews: 0,
-    description,
-    specifications,
-    variants,
+    name, basePrice, user: req.user._id, generalImages, brand, category,
+    countInStock: 0, numReviews: 0, description, specifications, variants,
   });
 
   const createdProduct = await product.save();
@@ -200,15 +166,12 @@ const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json(createdProduct);
 });
 
-// @desc    Импорт товаров из JSON
+// @desc    Import products from JSON
 // @route   POST /api/products/import
 // @access  Private/Admin
 const importProducts = asyncHandler(async (req, res) => {
   let products = req.body;
-
-  if (!Array.isArray(products)) {
-    products = [products];
-  }
+  if (!Array.isArray(products)) products = [products];
 
   const productsWithUser = products.map((product) => {
     const { _id, createdAt, updatedAt, __v, ...rest } = product;
@@ -221,12 +184,12 @@ const importProducts = asyncHandler(async (req, res) => {
     await updateFilterConfigFromProduct(product);
   }
 
-  res.status(201).json({ message: 'Товары успешно импортированы' });
+  res.status(201).json({ message: 'Products imported' });
 });
 
-// @desc    Обновить товар (редактирование)
+// @desc    Update a product
 // @route   PUT /api/products/:id
-// @access  Private/Manager/Admin
+// @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
   const { name, basePrice, description, generalImages, brand, category, specifications, variants } = req.body;
   const product = await Product.findById(req.params.id);
@@ -246,22 +209,22 @@ const updateProduct = asyncHandler(async (req, res) => {
     res.json(updatedProduct);
   } else {
     res.status(404);
-    throw new Error('Товар не найден');
+    throw new Error('Product not found');
   }
 });
 
-// @desc    Удалить товар
+// @desc    Delete a product
 // @route   DELETE /api/products/:id
-// @access  Private/Admin (только Админ)
+// @access  Private/Admin
 const deleteProduct = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id);
 
   if (product) {
     await Product.deleteOne({ _id: product._id });
-    res.json({ message: 'Товар успешно удален' });
+    res.json({ message: 'Product deleted' });
   } else {
     res.status(404);
-    throw new Error('Товар не найден');
+    throw new Error('Product not found');
   }
 });
 

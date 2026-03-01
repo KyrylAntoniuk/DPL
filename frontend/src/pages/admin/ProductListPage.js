@@ -4,19 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { Table, Button, Row, Col } from 'react-bootstrap';
 import { FaEdit, FaTrash, FaFileImport } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import SearchAndSort from '../../components/SearchAndSort';
-import {
-  useGetProductsQuery,
-  useDeleteProductMutation,
-  useImportProductsMutation,
-} from '../../redux/api/productsApiSlice';
+import { useGetProductsQuery, useDeleteProductMutation, useImportProductsMutation } from '../../redux/api/productsApiSlice';
 import useTitle from '../../hooks/useTitle';
 
 const ProductListPage = () => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   useTitle(t('admin.products'));
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useGetProductsQuery({});
@@ -27,9 +23,7 @@ const ProductListPage = () => {
   const [sort, setSort] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
 
-  const createProductHandler = () => {
-    navigate('/admin/product/create');
-  };
+  const createProductHandler = () => navigate('/admin/product/create');
 
   const deleteHandler = async (id) => {
     if (window.confirm(t('admin.confirmDelete'))) {
@@ -52,7 +46,7 @@ const ProductListPage = () => {
       try {
         const json = JSON.parse(event.target.result);
         await importProducts(json).unwrap();
-        toast.success(t('admin.productCreated')); // Используем похожий ключ или добавим новый
+        toast.success(t('admin.productCreated'));
         refetch();
       } catch (err) {
         toast.error(t('common.error') + ': ' + (err?.data?.message || err.message));
@@ -92,7 +86,7 @@ const ProductListPage = () => {
   }, [data, search, sort, sortDirection]);
 
   const sortOptions = [
-    { value: 'name', label: t('auth.name') }, // Используем общие ключи
+    { value: 'name', label: t('auth.name') },
     { value: 'basePrice', label: t('product.price') },
     { value: 'category', label: t('home.category') },
     { value: 'brand', label: t('admin.brand') },
@@ -101,25 +95,12 @@ const ProductListPage = () => {
   return (
     <>
       <Row className="align-items-center">
-        <Col>
-          <h1>{t('admin.products')}</h1>
-        </Col>
+        <Col><h1>{t('admin.products')}</h1></Col>
         <Col className="text-end">
-          <input
-            type="file"
-            id="json-upload"
-            style={{ display: 'none' }}
-            accept=".json"
-            onChange={uploadFileHandler}
-          />
-          <Button 
-            className="btn-sm m-3" 
-            variant="outline-primary"
-            onClick={() => document.getElementById('json-upload').click()}
-          >
+          <input type="file" id="json-upload" style={{ display: 'none' }} accept=".json" onChange={uploadFileHandler} />
+          <Button className="btn-sm m-3" variant="outline-primary" onClick={() => document.getElementById('json-upload').click()}>
             <FaFileImport /> {t('admin.importJson')}
           </Button>
-
           <Button className="btn-sm m-3" onClick={createProductHandler}>
             <FaEdit /> {t('admin.createProduct')}
           </Button>
@@ -127,61 +108,46 @@ const ProductListPage = () => {
       </Row>
 
       <SearchAndSort 
-        search={search}
-        setSearch={setSearch}
-        sort={sort}
-        setSort={setSort}
-        sortOptions={sortOptions}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
+        search={search} setSearch={setSearch} sort={sort} setSort={setSort}
+        sortOptions={sortOptions} sortDirection={sortDirection} setSortDirection={setSortDirection}
       />
 
       {loadingDelete && <Loader />}
       {loadingImport && <Loader />}
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
+      {isLoading ? <Loader /> : error ? (
         <Message variant="danger">{error?.data?.message || error.error}</Message>
       ) : (
-        <>
-          <Table striped bordered hover responsive className="table-sm">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>{t('auth.name').toUpperCase()}</th>
-                <th>{t('product.price').toUpperCase()}</th>
-                <th>{t('home.category').toUpperCase()}</th>
-                <th>{t('admin.brand').toUpperCase()}</th>
-                <th></th>
+        <Table striped bordered hover responsive className="table-sm">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>{t('auth.name').toUpperCase()}</th>
+              <th>{t('product.price').toUpperCase()}</th>
+              <th>{t('home.category').toUpperCase()}</th>
+              <th>{t('admin.brand').toUpperCase()}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.map((product) => (
+              <tr key={product._id}>
+                <td>{product._id}</td>
+                <td>{product.name}</td>
+                <td>${product.basePrice}</td>
+                <td>{product.category}</td>
+                <td>{product.brand}</td>
+                <td>
+                  <LinkContainer to={`/admin/product/${product._id}/edit`}>
+                    <Button variant="light" className="btn-sm mx-2"><FaEdit /></Button>
+                  </LinkContainer>
+                  <Button variant="danger" className="btn-sm" onClick={() => deleteHandler(product._id)}>
+                    <FaTrash style={{ color: 'white' }} />
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product) => (
-                <tr key={product._id}>
-                  <td>{product._id}</td>
-                  <td>{product.name}</td>
-                  <td>${product.basePrice}</td>
-                  <td>{product.category}</td>
-                  <td>{product.brand}</td>
-                  <td>
-                    <LinkContainer to={`/admin/product/${product._id}/edit`}>
-                      <Button variant="light" className="btn-sm mx-2">
-                        <FaEdit />
-                      </Button>
-                    </LinkContainer>
-                    <Button
-                      variant="danger"
-                      className="btn-sm"
-                      onClick={() => deleteHandler(product._id)}
-                    >
-                      <FaTrash style={{ color: 'white' }} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </>
+            ))}
+          </tbody>
+        </Table>
       )}
     </>
   );

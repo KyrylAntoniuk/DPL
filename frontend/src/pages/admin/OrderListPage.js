@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
 import { Table, Button, Badge, Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useTranslation } from 'react-i18next';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import SearchAndSort from '../../components/SearchAndSort';
@@ -10,7 +10,7 @@ import { useGetOrdersQuery, useUpdateOrderStatusMutation } from '../../redux/api
 import useTitle from '../../hooks/useTitle';
 
 const OrderListPage = () => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   useTitle(t('admin.orders'));
   const { data: orders, isLoading, error } = useGetOrdersQuery();
   const [updateOrderStatus, { isLoading: loadingUpdate }] = useUpdateOrderStatusMutation();
@@ -22,7 +22,7 @@ const OrderListPage = () => {
   const statusHandler = async (id, status) => {
     try {
       await updateOrderStatus({ orderId: id, status });
-      toast.success(t('common.save')); // Или добавить ключ orderUpdated
+      toast.success(t('common.save'));
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -71,19 +71,12 @@ const OrderListPage = () => {
       <h1>{t('admin.orders')}</h1>
       
       <SearchAndSort 
-        search={search}
-        setSearch={setSearch}
-        sort={sort}
-        setSort={setSort}
-        sortOptions={sortOptions}
-        sortDirection={sortDirection}
-        setSortDirection={setSortDirection}
+        search={search} setSearch={setSearch} sort={sort} setSort={setSort}
+        sortOptions={sortOptions} sortDirection={sortDirection} setSortDirection={setSortDirection}
       />
 
       {loadingUpdate && <Loader />}
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
+      {isLoading ? <Loader /> : error ? (
         <Message variant="danger">{error?.data?.message || error.error}</Message>
       ) : (
         <Table striped bordered hover responsive className="table-sm">
@@ -114,8 +107,7 @@ const OrderListPage = () => {
                 </td>
                 <td>
                   <Form.Select 
-                    size="sm" 
-                    value={order.status} 
+                    size="sm" value={order.status} 
                     onChange={(e) => statusHandler(order._id, e.target.value)}
                     style={{ width: '140px' }}
                   >
@@ -128,9 +120,7 @@ const OrderListPage = () => {
                 </td>
                 <td>
                   <LinkContainer to={`/order/${order._id}`}>
-                    <Button variant="light" className="btn-sm">
-                      {t('profile.details')}
-                    </Button>
+                    <Button variant="light" className="btn-sm">{t('profile.details')}</Button>
                   </LinkContainer>
                 </td>
               </tr>

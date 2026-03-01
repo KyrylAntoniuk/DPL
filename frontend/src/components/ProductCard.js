@@ -5,15 +5,9 @@ import Rating from './Rating';
 import FavoriteIcon from './FavoriteIcon';
 
 const ProductCard = ({ product }) => {
-  // Проверяем наличие продукта, чтобы избежать ошибок
-  if (!product) {
-    return null;
-  }
+  if (!product) return null;
 
-  // Адаптивно выбираем источник изображения
   const imageUrl = product.generalImages?.[0] || product.image || '/images/sample.jpg';
-  
-  // Адаптивно выбираем цену
   const price = product.basePrice !== undefined ? product.basePrice : product.price;
 
   return (
@@ -30,14 +24,12 @@ const ProductCard = ({ product }) => {
           </Card.Title>
         </Link>
 
-        {/* Отображаем рейтинг только если он есть */}
         {product.rating !== undefined && (
           <Card.Text as="div">
-            <Rating value={product.rating} text={`${product.numReviews} отзывов`} />
+            <Rating value={product.rating} text={`${product.numReviews} reviews`} />
           </Card.Text>
         )}
 
-        {/* Отображаем цену только если она есть */}
         {price !== undefined && (
           <Card.Text as="h3">${price}</Card.Text>
         )}

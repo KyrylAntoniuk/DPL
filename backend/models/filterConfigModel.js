@@ -6,7 +6,7 @@ const filterConfigSchema = new mongoose.Schema({
       key: { type: String, required: true },
       label: {
         en: { type: String, required: true },
-        uk: { type: String, required: true }, // Заменили ru на uk
+        uk: { type: String, required: true },
       },
     }
   ],
