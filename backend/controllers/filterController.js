@@ -6,8 +6,10 @@ import Product from '../models/productModel.js';
 // @route   GET /api/filters/config
 // @access  Public
 const getFilterConfig = asyncHandler(async (req, res) => {
-  // Ищем конфиг или создаем дефолтный
+  // Ищем конфиг
   let config = await FilterConfig.findOne();
+  
+  // Если конфига нет в БД, создаем его и СОХРАНЯЕМ
   if (!config) {
     config = await FilterConfig.create({
       filterableFields: [
@@ -40,37 +42,31 @@ const updateFilterConfig = asyncHandler(async (req, res) => {
 // @access  Public
 const getFilters = asyncHandler(async (req, res) => {
   const queryParams = { ...req.query };
-  // Удаляем служебные параметры, если они есть
   delete queryParams.pageNumber;
   delete queryParams.keyword;
 
-  // Получаем конфиг
   let config = await FilterConfig.findOne();
   if (!config) {
+    // Если конфига нет, используем дефолтный в памяти, но не сохраняем (чтобы не мусорить при каждом запросе)
     config = { filterableFields: [{ key: 'brand', label: 'Бренд' }] };
   }
 
   const filters = {};
 
-  // Для каждого настроенного поля собираем уникальные значения
   for (const field of config.filterableFields) {
     let values = [];
 
     if (field.key === 'brand') {
-      // Для бренда логика простая
       values = await Product.find(queryParams).distinct('brand');
     } else if (field.key.startsWith('specifications.')) {
-      // Для характеристик сложнее: нужно искать внутри массива specifications
-      // Ключ будет, например, "specifications.RAM" -> ищем спецификацию с name="RAM"
       const specName = field.key.split('.')[1];
       
-      // Агрегация MongoDB для извлечения уникальных значений характеристик
       const result = await Product.aggregate([
-        { $match: queryParams }, // Фильтруем товары (например, по категории)
-        { $unwind: '$specifications' }, // Разворачиваем массив характеристик
-        { $match: { 'specifications.name': specName } }, // Ищем нужную характеристику
-        { $group: { _id: '$specifications.value' } }, // Группируем по значению
-        { $sort: { _id: 1 } } // Сортируем
+        { $match: queryParams },
+        { $unwind: '$specifications' },
+        { $match: { 'specifications.name': specName } },
+        { $group: { _id: '$specifications.value' } },
+        { $sort: { _id: 1 } }
       ]);
       
       values = result.map(item => item._id);

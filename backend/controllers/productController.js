@@ -1,6 +1,36 @@
 import asyncHandler from 'express-async-handler';
 import Product from '../models/productModel.js';
 import Review from '../models/reviewModel.js';
+import FilterConfig from '../models/filterConfigModel.js';
+
+// --- Вспомогательная функция для авто-обновления конфига фильтров ---
+const updateFilterConfigFromProduct = async (product) => {
+  if (!product.specifications || product.specifications.length === 0) return;
+
+  let config = await FilterConfig.findOne();
+  if (!config) {
+    config = new FilterConfig({ filterableFields: [{ key: 'brand', label: 'Бренд' }] });
+  }
+
+  let isModified = false;
+
+  product.specifications.forEach((spec) => {
+    const key = `specifications.${spec.name}`;
+    const exists = config.filterableFields.some((field) => field.key === key);
+
+    if (!exists) {
+      config.filterableFields.push({
+        key: key,
+        label: spec.name,
+      });
+      isModified = true;
+    }
+  });
+
+  if (isModified) {
+    await config.save();
+  }
+};
 
 // @desc    Получить список всех товаров с фильтрацией и пагинацией
 // @route   GET /api/products
@@ -22,9 +52,40 @@ const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
+  // --- УЛУЧШЕННАЯ ФИЛЬТРАЦИЯ ---
   for (const key in queryParams) {
-    filter[key] = queryParams[key];
+    if (key.startsWith('specifications.')) {
+      // Фильтрация по характеристикам
+      const specName = key.split('.')[1];
+      const specValue = queryParams[key];
+      const values = Array.isArray(specValue) ? specValue : [specValue];
+
+      // Используем $all для specifications, чтобы можно было фильтровать по нескольким разным характеристикам одновременно
+      if (!filter.specifications) {
+        filter.specifications = { $all: [] };
+      }
+
+      // Добавляем условие: в массиве specifications должен быть элемент с нужным именем и одним из выбранных значений
+      filter.specifications.$all.push({
+        $elemMatch: {
+          name: specName,
+          value: { $in: values }
+        }
+      });
+
+    } else if (key === 'brand') {
+      // Фильтрация по бренду (поддержка множественного выбора)
+      const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
+      filter.brand = { $in: values };
+    } else if (key === 'category') {
+       // Фильтрация по категории
+       filter.category = queryParams[key];
+    } else {
+      // Остальные поля
+      filter[key] = queryParams[key];
+    }
   }
+  // -----------------------------
 
   const count = await Product.countDocuments(filter);
 
@@ -133,6 +194,7 @@ const createProduct = asyncHandler(async (req, res) => {
   });
 
   const createdProduct = await product.save();
+  await updateFilterConfigFromProduct(createdProduct);
   res.status(201).json(createdProduct);
 });
 
@@ -142,18 +204,20 @@ const createProduct = asyncHandler(async (req, res) => {
 const importProducts = asyncHandler(async (req, res) => {
   let products = req.body;
 
-  // Если пришел один объект, оборачиваем его в массив
   if (!Array.isArray(products)) {
     products = [products];
   }
 
-  // Добавляем ID пользователя (админа) к каждому товару и удаляем старые ID
   const productsWithUser = products.map((product) => {
     const { _id, createdAt, updatedAt, __v, ...rest } = product;
     return { ...rest, user: req.user._id };
   });
 
-  await Product.insertMany(productsWithUser);
+  const createdProducts = await Product.insertMany(productsWithUser);
+
+  for (const product of createdProducts) {
+    await updateFilterConfigFromProduct(product);
+  }
 
   res.status(201).json({ message: 'Товары успешно импортированы' });
 });
@@ -176,6 +240,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.variants = variants || product.variants;
 
     const updatedProduct = await product.save();
+    await updateFilterConfigFromProduct(updatedProduct);
     res.json(updatedProduct);
   } else {
     res.status(404);

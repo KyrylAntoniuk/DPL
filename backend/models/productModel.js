@@ -8,7 +8,6 @@ const specificationSchema = new mongoose.Schema({
 
 // 2. Схема для модификаций (Variants)
 const variantSchema = new mongoose.Schema({
-  // ИСПРАВЛЕНО: Меняем Map на Object, чтобы Mongoose корректно читал любые JSON-объекты из БД
   options: { type: Object, required: true },
   price: { type: Number, required: true },
   countInStock: { type: Number, required: true, default: 0 },
@@ -30,10 +29,12 @@ const productSchema = new mongoose.Schema(
     brand: {
       type: String,
       required: true,
+      index: true, // Индекс для быстрого поиска и фильтрации
     },
     category: {
       type: String,
       required: true,
+      index: true, // Индекс для мгновенного получения списка категорий (distinct)
     },
     description: {
       type: String,
