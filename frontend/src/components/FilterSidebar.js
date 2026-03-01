@@ -7,7 +7,7 @@ import Message from './Message';
 
 const FilterSidebar = ({ filters, setFilters }) => {
   const { data: categories, isLoading: isLoadingCategories, error: errorCategories } = useGetProductCategoriesQuery();
-  
+
   const { data: dynamicFilters, isLoading: isLoadingFilters } = useGetDynamicFiltersQuery(filters);
 
   const [keyword, setKeyword] = useState(filters.keyword || '');
@@ -24,7 +24,7 @@ const FilterSidebar = ({ filters, setFilters }) => {
     if (type === 'checkbox') {
       // Гарантируем, что currentValues - это массив
       let currentValues = newFilters[name];
-      
+
       if (!currentValues) {
         currentValues = [];
       } else if (!Array.isArray(currentValues)) {
@@ -40,11 +40,10 @@ const FilterSidebar = ({ filters, setFilters }) => {
     } else {
       newFilters[name] = value;
     }
-    
-    if (name === 'category') {
-      // При смене категории можно сбрасывать другие фильтры
-      // delete newFilters.brand; 
-    }
+
+    // При множественном выборе категорий сброс других фильтров лучше отключить,
+    // либо продумать логику сброса только если массив категорий стал пустым.
+    // if (name === 'category') { ... }
 
     setFilters(newFilters);
   };
@@ -63,66 +62,67 @@ const FilterSidebar = ({ filters, setFilters }) => {
   };
 
   return (
-    <div className="filter-sidebar">
-      <h4>Фильтры</h4>
-      <hr />
+      <div className="filter-sidebar">
+        <h4>Фильтры</h4>
+        <hr />
 
-      <h5>Поиск</h5>
-      <Form.Group>
-        <Form.Control
-          type="text"
-          placeholder="Название товара..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-        />
-      </Form.Group>
-      <hr />
-
-      <h5>Категория</h5>
-      {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">Ошибка</Message> : (
+        <h5>Поиск</h5>
         <Form.Group>
-          {categories?.map(category => (
-            <Form.Check
-              key={category}
-              type="radio"
-              name="category"
-              id={`category-${category}`}
-              label={category}
-              value={category}
-              checked={filters.category === category}
-              onChange={handleFilterChange}
-            />
-          ))}
+          <Form.Control
+              type="text"
+              placeholder="Название товара..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+          />
         </Form.Group>
-      )}
-      <hr />
+        <hr />
 
-      {/* Динамические фильтры */}
-      {isLoadingFilters ? <Loader /> : dynamicFilters && Object.entries(dynamicFilters).map(([key, filterData]) => (
-        <div key={key}>
-          <h5>{filterData.label}</h5>
-          <Form.Group>
-            {filterData.values.map(val => (
-              <Form.Check
-                key={val}
-                type="checkbox"
-                name={key}
-                id={`${key}-${val}`}
-                label={val}
-                value={val}
-                checked={isChecked(key, val)} // Используем безопасную проверку
-                onChange={handleFilterChange}
-              />
-            ))}
-          </Form.Group>
-          <hr />
-        </div>
-      ))}
+        <h5>Категория</h5>
+        {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">Ошибка</Message> : (
+            <Form.Group>
+              {categories?.map(category => (
+                  <Form.Check
+                      key={category}
+                      type="checkbox"
+                      name="category"
+                      id={`category-${category}`}
+                      label={category}
+                      value={category}
+                      // ИСПОЛЬЗУЕМ isChecked ДЛЯ КОРРЕКТНОЙ РАБОТЫ МАССИВА
+                      checked={isChecked('category', category)}
+                      onChange={handleFilterChange}
+                  />
+              ))}
+            </Form.Group>
+        )}
+        <hr />
 
-      <Button variant="outline-secondary" onClick={handleResetFilters} className="w-100">
-        Сбросить все фильтры
-      </Button>
-    </div>
+        {/* Динамические фильтры */}
+        {isLoadingFilters ? <Loader /> : dynamicFilters && Object.entries(dynamicFilters).map(([key, filterData]) => (
+            <div key={key}>
+              <h5>{filterData.label}</h5>
+              <Form.Group>
+                {filterData.values.map(val => (
+                    <Form.Check
+                        key={val}
+                        type="checkbox"
+                        name={key}
+                        id={`${key}-${val}`}
+                        label={val}
+                        value={val}
+                        checked={isChecked(key, val)}
+                        onChange={handleFilterChange}
+                    />
+                ))}
+              </Form.Group>
+              <hr />
+            </div>
+        ))}
+
+        <Button variant="outline-secondary" onClick={handleResetFilters} className="w-100">
+          Сбросить все фильтры
+        </Button>
+      </div>
   );
 };
 
