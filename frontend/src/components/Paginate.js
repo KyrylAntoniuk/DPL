@@ -1,24 +1,33 @@
 import React from 'react';
 import { Pagination } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
+import { useLocation } from 'react-router-dom';
 
 const Paginate = ({ pages, page, isAdmin = false, keyword = '', category = '' }) => {
-  // Не показываем пагинацию, если всего одна страница
+  const { search } = useLocation(); // Получаем текущую строку запроса (?brand=Apple...)
+
   if (pages <= 1) {
     return null;
   }
 
   const getLink = (p) => {
+    let pathname = '';
+
     if (isAdmin) {
-      // Логика для админских страниц (пока не реализована)
-      return `/admin/products/${p}`;
+      pathname = `/admin/products/${p}`;
     } else if (keyword) {
-      return `/search/${keyword}/page/${p}`;
+      pathname = `/search/${keyword}/page/${p}`;
     } else if (category) {
-      return `/catalog/${category}/page/${p}`;
+      pathname = `/catalog/${category}/page/${p}`;
     } else {
-      return `/page/${p}`;
+      pathname = `/page/${p}`;
     }
+
+    // Возвращаем объект, чтобы React Router корректно обработал путь и параметры
+    return {
+      pathname: pathname,
+      search: search, // Передаем текущие параметры поиска
+    };
   };
 
   return (

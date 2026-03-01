@@ -6,10 +6,8 @@ import Product from '../models/productModel.js';
 // @route   GET /api/filters/config
 // @access  Public
 const getFilterConfig = asyncHandler(async (req, res) => {
-  // Ищем конфиг
   let config = await FilterConfig.findOne();
   
-  // Если конфига нет в БД, создаем его и СОХРАНЯЕМ
   if (!config) {
     config = await FilterConfig.create({
       filterableFields: [
@@ -37,6 +35,38 @@ const updateFilterConfig = asyncHandler(async (req, res) => {
   res.json(config);
 });
 
+// Вспомогательная функция для построения фильтра MongoDB
+const buildMongoFilter = (queryParams) => {
+  const filter = {};
+
+  for (const key in queryParams) {
+    if (key.startsWith('specifications.')) {
+      const specName = key.split('.')[1];
+      const specValue = queryParams[key];
+      const values = Array.isArray(specValue) ? specValue : [specValue];
+
+      if (!filter.specifications) {
+        filter.specifications = { $all: [] };
+      }
+
+      filter.specifications.$all.push({
+        $elemMatch: {
+          name: specName,
+          value: { $in: values }
+        }
+      });
+    } else if (key === 'brand') {
+      const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
+      filter.brand = { $in: values };
+    } else if (key === 'category') {
+       filter.category = queryParams[key];
+    } else {
+      filter[key] = queryParams[key];
+    }
+  }
+  return filter;
+};
+
 // @desc    Получить значения для фильтров (динамически)
 // @route   GET /api/filters
 // @access  Public
@@ -47,7 +77,6 @@ const getFilters = asyncHandler(async (req, res) => {
 
   let config = await FilterConfig.findOne();
   if (!config) {
-    // Если конфига нет, используем дефолтный в памяти, но не сохраняем (чтобы не мусорить при каждом запросе)
     config = { filterableFields: [{ key: 'brand', label: 'Бренд' }] };
   }
 
@@ -56,13 +85,21 @@ const getFilters = asyncHandler(async (req, res) => {
   for (const field of config.filterableFields) {
     let values = [];
 
+    // 1. Берем исходные параметры
+    const currentFieldParams = { ...queryParams };
+    // 2. Удаляем фильтр по текущему полю (чтобы видеть все варианты для этого поля)
+    delete currentFieldParams[field.key];
+    
+    // 3. Преобразуем параметры в правильный MongoDB запрос (с $elemMatch и т.д.)
+    const mongoFilter = buildMongoFilter(currentFieldParams);
+
     if (field.key === 'brand') {
-      values = await Product.find(queryParams).distinct('brand');
+      values = await Product.find(mongoFilter).distinct('brand');
     } else if (field.key.startsWith('specifications.')) {
       const specName = field.key.split('.')[1];
       
       const result = await Product.aggregate([
-        { $match: queryParams },
+        { $match: mongoFilter }, // Используем правильный фильтр
         { $unwind: '$specifications' },
         { $match: { 'specifications.name': specName } },
         { $group: { _id: '$specifications.value' } },
