@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react'; // Импорт Suspense
 import ReactDOM from 'react-dom/client';
 import {
     createBrowserRouter,
@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
+import './i18n'; // Импорт конфигурации i18n
 
 // Стили
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -29,6 +30,7 @@ import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import Loader from './components/Loader'; // Импорт Loader
 
 // Защищенные маршруты
 import PrivateRoute from './components/PrivateRoute';
@@ -42,7 +44,7 @@ import UserListPage from './pages/admin/UserListPage';
 import UserEditPage from './pages/admin/UserEditPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
 import ProductCreatePage from './pages/admin/ProductCreatePage';
-import FilterConfigPage from './pages/admin/FilterConfigPage'; // Импорт
+import FilterConfigPage from './pages/admin/FilterConfigPage';
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -75,7 +77,7 @@ const router = createBrowserRouter(
                 <Route path="/admin/products" element={<ProductListPage />} />
                 <Route path="/admin/product/create" element={<ProductCreatePage />} />
                 <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
-                <Route path="/admin/filters" element={<FilterConfigPage />} /> {/* Новый маршрут */}
+                <Route path="/admin/filters" element={<FilterConfigPage />} />
             </Route>
 
             {/* Маршруты только для Админа */}
@@ -94,7 +96,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
         <Provider store={store}>
-            <RouterProvider router={router} />
+            <Suspense fallback={<Loader />}>
+                <RouterProvider router={router} />
+            </Suspense>
         </Provider>
     </React.StrictMode>
 );

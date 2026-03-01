@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Row, Col, ListGroup, Image, Form, Button, Card } from 'react-bootstrap';
 import { FaTrash } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../components/Message';
 import { addToCart, removeFromCart } from '../redux/slices/cartSlice';
 import useTitle from '../hooks/useTitle';
 
 const CartPage = () => {
-  useTitle('Корзина');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('cart.title'));
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -36,10 +38,10 @@ const CartPage = () => {
   return (
     <Row>
       <Col md={8}>
-        <h1 style={{ marginBottom: '20px' }}>Корзина</h1>
+        <h1 style={{ marginBottom: '20px' }}>{t('cart.title')}</h1>
         {cartItems.length === 0 ? (
           <Message>
-            Ваша корзина пуста <Link to="/">Назад</Link>
+            {t('cart.empty')} <Link to="/">{t('cart.back')}</Link>
           </Message>
         ) : (
           <ListGroup variant="flush">
@@ -91,7 +93,7 @@ const CartPage = () => {
           <ListGroup variant="flush">
             <ListGroup.Item>
               <h2>
-                Итого ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) товаров
+                {t('cart.subtotal')} ({cartItems.reduce((acc, item) => acc + item.qty, 0)}) {t('cart.items')}
               </h2>
               ${cart.totalPrice}
             </ListGroup.Item>
@@ -102,7 +104,7 @@ const CartPage = () => {
                 disabled={cartItems.length === 0}
                 onClick={checkoutHandler}
               >
-                Перейти к оформлению
+                {t('cart.checkout')}
               </Button>
             </ListGroup.Item>
           </ListGroup>

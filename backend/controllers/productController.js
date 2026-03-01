@@ -9,7 +9,12 @@ const updateFilterConfigFromProduct = async (product) => {
 
   let config = await FilterConfig.findOne();
   if (!config) {
-    config = new FilterConfig({ filterableFields: [{ key: 'brand', label: 'Бренд' }] });
+    config = new FilterConfig({ 
+      filterableFields: [{ 
+        key: 'brand', 
+        label: { en: 'Brand', uk: 'Бренд' } // uk
+      }] 
+    });
   }
 
   let isModified = false;
@@ -21,7 +26,10 @@ const updateFilterConfigFromProduct = async (product) => {
     if (!exists) {
       config.filterableFields.push({
         key: key,
-        label: spec.name,
+        label: {
+          en: spec.name,
+          uk: spec.name, // uk
+        },
       });
       isModified = true;
     }
@@ -31,6 +39,8 @@ const updateFilterConfigFromProduct = async (product) => {
     await config.save();
   }
 };
+
+// ... (остальной код без изменений)
 
 // @desc    Получить список всех товаров с фильтрацией и пагинацией
 // @route   GET /api/products
@@ -52,20 +62,16 @@ const getProducts = asyncHandler(async (req, res) => {
     };
   }
 
-  // --- УЛУЧШЕННАЯ ФИЛЬТРАЦИЯ ---
   for (const key in queryParams) {
     if (key.startsWith('specifications.')) {
-      // Фильтрация по характеристикам
       const specName = key.split('.')[1];
       const specValue = queryParams[key];
       const values = Array.isArray(specValue) ? specValue : [specValue];
 
-      // Используем $all для specifications, чтобы можно было фильтровать по нескольким разным характеристикам одновременно
       if (!filter.specifications) {
         filter.specifications = { $all: [] };
       }
 
-      // Добавляем условие: в массиве specifications должен быть элемент с нужным именем и одним из выбранных значений
       filter.specifications.$all.push({
         $elemMatch: {
           name: specName,
@@ -74,18 +80,14 @@ const getProducts = asyncHandler(async (req, res) => {
       });
 
     } else if (key === 'brand') {
-      // Фильтрация по бренду (поддержка множественного выбора)
       const values = Array.isArray(queryParams[key]) ? queryParams[key] : [queryParams[key]];
       filter.brand = { $in: values };
     } else if (key === 'category') {
-       // Фильтрация по категории
        filter.category = queryParams[key];
     } else {
-      // Остальные поля
       filter[key] = queryParams[key];
     }
   }
-  // -----------------------------
 
   const count = await Product.countDocuments(filter);
 

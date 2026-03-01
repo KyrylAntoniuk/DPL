@@ -1,47 +1,50 @@
 import React from 'react';
 import { Nav } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
+import { useTranslation } from 'react-i18next'; // Импорт
 
 const CheckoutSteps = ({ step1, step2, step3, step4 }) => {
+  const { t } = useTranslation(); // Хук
+
   return (
     <Nav className="justify-content-center mb-4">
       <Nav.Item>
         {step1 ? (
           <LinkContainer to="/login">
-            <Nav.Link>Вход</Nav.Link>
+            <Nav.Link>{t('auth.signIn')}</Nav.Link>
           </LinkContainer>
         ) : (
-          <Nav.Link disabled>Вход</Nav.Link>
+          <Nav.Link disabled>{t('auth.signIn')}</Nav.Link>
         )}
       </Nav.Item>
 
       <Nav.Item>
         {step2 ? (
           <LinkContainer to="/checkout/shipping">
-            <Nav.Link>Доставка</Nav.Link>
+            <Nav.Link>{t('shipping.title')}</Nav.Link>
           </LinkContainer>
         ) : (
-          <Nav.Link disabled>Доставка</Nav.Link>
+          <Nav.Link disabled>{t('shipping.title')}</Nav.Link>
         )}
       </Nav.Item>
 
       <Nav.Item>
         {step3 ? (
           <LinkContainer to="/checkout/payment">
-            <Nav.Link>Оплата</Nav.Link>
+            <Nav.Link>{t('payment.title')}</Nav.Link>
           </LinkContainer>
         ) : (
-          <Nav.Link disabled>Оплата</Nav.Link>
+          <Nav.Link disabled>{t('payment.title')}</Nav.Link>
         )}
       </Nav.Item>
 
       <Nav.Item>
         {step4 ? (
           <LinkContainer to="/checkout/placeorder">
-            <Nav.Link>Подтверждение</Nav.Link>
+            <Nav.Link>{t('placeOrder.title')}</Nav.Link>
           </LinkContainer>
         ) : (
-          <Nav.Link disabled>Подтверждение</Nav.Link>
+          <Nav.Link disabled>{t('placeOrder.title')}</Nav.Link>
         )}
       </Nav.Item>
     </Nav>

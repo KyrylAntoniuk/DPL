@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import FormContainer from '../../components/FormContainer';
@@ -9,19 +10,18 @@ import {
   useGetUserByIdQuery,
   useUpdateUserMutation,
 } from '../../redux/api/usersApiSlice';
-import useTitle from '../../hooks/useTitle';
 
 const UserEditPage = () => {
+  const { t } = useTranslation(); // Хук
   const { id: userId } = useParams();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('user');
+  const [role, setRole] = useState('user'); // Добавили стейт для роли
 
-  const { data: user, isLoading, refetch, error } = useGetUserByIdQuery(userId);
+  const { data: user, isLoading, error, refetch } = useGetUserByIdQuery(userId);
   const [updateUser, { isLoading: loadingUpdate }] = useUpdateUserMutation();
 
   const navigate = useNavigate();
-  useTitle(user ? `Редактирование ${user.name}` : 'Редактирование');
 
   useEffect(() => {
     if (user) {
@@ -35,7 +35,7 @@ const UserEditPage = () => {
     e.preventDefault();
     try {
       await updateUser({ userId, name, email, role });
-      toast.success('Пользователь успешно обновлен');
+      toast.success(t('common.save')); // Или userUpdated
       refetch();
       navigate('/admin/users');
     } catch (err) {
@@ -46,10 +46,10 @@ const UserEditPage = () => {
   return (
     <>
       <Link to="/admin/users" className="btn btn-light my-3">
-        Назад
+        {t('common.back')}
       </Link>
       <FormContainer>
-        <h1>Редактировать пользователя</h1>
+        <h1>{t('common.edit')} {t('header.users')}</h1>
         {loadingUpdate && <Loader />}
         {isLoading ? (
           <Loader />
@@ -57,41 +57,40 @@ const UserEditPage = () => {
           <Message variant="danger">{error?.data?.message || error.error}</Message>
         ) : (
           <Form onSubmit={submitHandler}>
-            <Form.Group controlId="name" className="my-2">
-              <Form.Label>Имя</Form.Label>
+            <Form.Group className="my-2" controlId="name">
+              <Form.Label>{t('auth.name')}</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Введите имя"
+                placeholder={t('auth.name')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               ></Form.Control>
             </Form.Group>
 
-            <Form.Group controlId="email" className="my-2">
-              <Form.Label>Email</Form.Label>
+            <Form.Group className="my-2" controlId="email">
+              <Form.Label>{t('auth.email')}</Form.Label>
               <Form.Control
                 type="email"
-                placeholder="Введите email"
+                placeholder={t('auth.email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               ></Form.Control>
             </Form.Group>
 
-            <Form.Group controlId="role" className="my-2">
-              <Form.Label>Роль</Form.Label>
-              <Form.Control
-                as="select"
+            <Form.Group className="my-2" controlId="role">
+              <Form.Label>Role</Form.Label>
+              <Form.Select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
               >
-                <option value="user">Пользователь</option>
-                <option value="manager">Менеджер</option>
-                <option value="admin">Администратор</option>
-              </Form.Control>
+                <option value="user">User</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </Form.Select>
             </Form.Group>
 
             <Button type="submit" variant="primary" className="my-2">
-              Обновить
+              {t('common.update')}
             </Button>
           </Form>
         )}

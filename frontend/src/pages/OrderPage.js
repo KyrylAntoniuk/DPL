@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Row, Col, ListGroup, Image, Card, Badge } from 'react-bootstrap';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../components/Message';
 import Loader from '../components/Loader';
 import CheckoutForm from '../components/CheckoutForm';
@@ -15,7 +16,8 @@ import useTitle from '../hooks/useTitle';
 
 const OrderPage = () => {
   const { id: orderId } = useParams();
-  useTitle(`Заказ ${orderId}`);
+  const { t } = useTranslation(); // Хук
+  useTitle(`${t('order.title')} ${orderId}`);
 
   const { data: order, isLoading, error } = useGetOrderByIdQuery(orderId);
   const { data: stripeConfig, isLoading: loadingConfig, error: configError } = useGetStripePublishableKeyQuery();
@@ -25,22 +27,16 @@ const OrderPage = () => {
   const [stripePromise, setStripePromise] = useState(null);
 
   useEffect(() => {
-    console.log('Full Stripe Config:', stripeConfig); // ЛОГ
     if (stripeConfig && stripeConfig.publishableKey) {
-      console.log('Stripe Config loaded:', stripeConfig.publishableKey);
       setStripePromise(loadStripe(stripeConfig.publishableKey));
-    } else {
-      console.warn('Stripe Config is missing publishableKey'); // ЛОГ
     }
   }, [stripeConfig]);
 
   useEffect(() => {
     if (order && !order.isPaid && order.paymentMethod === 'Card' && !clientSecret) {
-      console.log('Creating Payment Intent...');
       createPaymentIntent({ orderId: order._id })
         .unwrap()
         .then((res) => {
-            console.log('Client Secret received:', res.clientSecret);
             setClientSecret(res.clientSecret);
         })
         .catch((err) => console.error('Error creating payment intent:', err));
@@ -70,21 +66,21 @@ const OrderPage = () => {
     <Message variant="danger">{error?.data?.message || error.error}</Message>
   ) : (
     <>
-      <h1>Заказ {order._id}</h1>
+      <h1>{t('order.title')} {order._id}</h1>
       <Row>
         <Col md={8}>
           <ListGroup variant="flush">
             <ListGroup.Item>
-              <h2>Доставка</h2>
-              <p><strong>Имя: </strong> {order.user.name}</p>
-              <p><strong>Email: </strong> <a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
+              <h2>{t('placeOrder.shipping')}</h2>
+              <p><strong>{t('auth.name')}: </strong> {order.user.name}</p>
+              <p><strong>{t('auth.email')}: </strong> <a href={`mailto:${order.user.email}`}>{order.user.email}</a></p>
               <p>
-                <strong>Адрес: </strong>
+                <strong>{t('shipping.address')}: </strong>
                 {order.shippingAddress.address}, {order.shippingAddress.city}{' '}
                 {order.shippingAddress.postalCode}, {order.shippingAddress.country}
               </p>
               <div className="mt-3">
-                <strong>Статус: </strong>
+                <strong>{t('order.status')}: </strong>
                 <Badge bg={getStatusVariant(order.status)} className="ms-2" style={{ fontSize: '1em' }}>
                   {order.status}
                 </Badge>
@@ -95,19 +91,19 @@ const OrderPage = () => {
             </ListGroup.Item>
 
             <ListGroup.Item>
-              <h2>Способ оплаты</h2>
-              <p><strong>Метод: </strong> {order.paymentMethod === 'Card' ? 'Кредитная карта' : order.paymentMethod}</p>
+              <h2>{t('placeOrder.payment')}</h2>
+              <p><strong>{t('shipping.method')}: </strong> {order.paymentMethod === 'Card' ? t('payment.card') : t('payment.cash')}</p>
               {order.isPaid ? (
-                <Message variant="success">Оплачено {new Date(order.paidAt).toLocaleDateString()}</Message>
+                <Message variant="success">{t('order.paid')} {new Date(order.paidAt).toLocaleDateString()}</Message>
               ) : (
-                <Message variant="danger">Не оплачено</Message>
+                <Message variant="danger">{t('order.notPaid')}</Message>
               )}
             </ListGroup.Item>
 
             <ListGroup.Item>
-              <h2>Товары в заказе</h2>
+              <h2>{t('placeOrder.orderItems')}</h2>
               {order.orderItems.length === 0 ? (
-                <Message>Заказ пуст</Message>
+                <Message>{t('cart.empty')}</Message>
               ) : (
                 <ListGroup variant="flush">
                   {order.orderItems.map((item, index) => (
@@ -139,17 +135,16 @@ const OrderPage = () => {
           <Card>
             <ListGroup variant="flush">
               <ListGroup.Item>
-                <h2>Сводка по заказу</h2>
+                <h2>{t('placeOrder.summary')}</h2>
               </ListGroup.Item>
-              <ListGroup.Item><Row><Col>Товары:</Col><Col>${order.itemsPrice}</Col></Row></ListGroup.Item>
-              <ListGroup.Item><Row><Col>Доставка:</Col><Col>${order.shippingPrice}</Col></Row></ListGroup.Item>
-              <ListGroup.Item><Row><Col>Налог:</Col><Col>${order.taxPrice}</Col></Row></ListGroup.Item>
-              <ListGroup.Item><Row><Col>Итого:</Col><Col>${order.totalPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>{t('placeOrder.items')}:</Col><Col>${order.itemsPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>{t('shipping.cost')}:</Col><Col>${order.shippingPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>{t('placeOrder.tax')}:</Col><Col>${order.taxPrice}</Col></Row></ListGroup.Item>
+              <ListGroup.Item><Row><Col>{t('placeOrder.total')}:</Col><Col>${order.totalPrice}</Col></Row></ListGroup.Item>
               
-              {/* Блок оплаты Stripe */}
               {!order.isPaid && order.paymentMethod === 'Card' && (
                 <ListGroup.Item>
-                  {configError && <Message variant="danger">Ошибка загрузки Stripe: {JSON.stringify(configError)}</Message>}
+                  {configError && <Message variant="danger">Error loading Stripe: {JSON.stringify(configError)}</Message>}
 
                   {loadingConfig ? <Loader /> : clientSecret && stripePromise ? (
                     <Elements stripe={stripePromise} options={{ clientSecret }}>

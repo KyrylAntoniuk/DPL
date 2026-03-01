@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import { useLoginMutation } from '../redux/api/usersApiSlice';
 import { setCredentials } from '../redux/slices/authSlice';
 import Loader from '../components/Loader';
@@ -10,7 +11,8 @@ import FormContainer from '../components/FormContainer';
 import useTitle from '../hooks/useTitle';
 
 const LoginPage = () => {
-  useTitle('Вход в аккаунт');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('auth.signIn'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -41,30 +43,30 @@ const LoginPage = () => {
 
   return (
     <FormContainer>
-      <h1>Вход</h1>
+      <h1>{t('auth.signIn')}</h1>
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="email">
-          <Form.Label>Email адрес</Form.Label>
+          <Form.Label>{t('auth.email')}</Form.Label>
           <Form.Control
             type="email"
-            placeholder="Введите email"
+            placeholder={t('auth.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Form.Group className="my-2" controlId="password">
-          <Form.Label>Пароль</Form.Label>
+          <Form.Label>{t('auth.password')}</Form.Label>
           <Form.Control
             type="password"
-            placeholder="Введите пароль"
+            placeholder={t('auth.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Button type="submit" variant="primary" className="mt-2" disabled={isLoading}>
-          Войти
+          {t('auth.login')}
         </Button>
 
         {isLoading && <Loader />}
@@ -72,10 +74,10 @@ const LoginPage = () => {
 
       <Row className="py-3">
         <Col>
-          Новый пользователь? <Link to="/register">Зарегистрироваться</Link>
+          {t('auth.newCustomer')} <Link to="/register">{t('auth.register')}</Link>
         </Col>
         <Col className="text-end">
-          <Link to="/forgotpassword">Забыли пароль?</Link>
+          <Link to="/forgotpassword">{t('auth.forgotPassword')}</Link>
         </Col>
       </Row>
     </FormContainer>

@@ -11,7 +11,7 @@ const getFilterConfig = asyncHandler(async (req, res) => {
   if (!config) {
     config = await FilterConfig.create({
       filterableFields: [
-        { key: 'brand', label: 'Бренд' }
+        { key: 'brand', label: { en: 'Brand', ru: 'Бренд' } }
       ]
     });
   }
@@ -35,7 +35,6 @@ const updateFilterConfig = asyncHandler(async (req, res) => {
   res.json(config);
 });
 
-// Вспомогательная функция для построения фильтра MongoDB
 const buildMongoFilter = (queryParams) => {
   const filter = {};
 
@@ -77,7 +76,7 @@ const getFilters = asyncHandler(async (req, res) => {
 
   let config = await FilterConfig.findOne();
   if (!config) {
-    config = { filterableFields: [{ key: 'brand', label: 'Бренд' }] };
+    config = { filterableFields: [{ key: 'brand', label: { en: 'Brand', ru: 'Бренд' } }] };
   }
 
   const filters = {};
@@ -85,12 +84,9 @@ const getFilters = asyncHandler(async (req, res) => {
   for (const field of config.filterableFields) {
     let values = [];
 
-    // 1. Берем исходные параметры
     const currentFieldParams = { ...queryParams };
-    // 2. Удаляем фильтр по текущему полю (чтобы видеть все варианты для этого поля)
     delete currentFieldParams[field.key];
     
-    // 3. Преобразуем параметры в правильный MongoDB запрос (с $elemMatch и т.д.)
     const mongoFilter = buildMongoFilter(currentFieldParams);
 
     if (field.key === 'brand') {
@@ -99,7 +95,7 @@ const getFilters = asyncHandler(async (req, res) => {
       const specName = field.key.split('.')[1];
       
       const result = await Product.aggregate([
-        { $match: mongoFilter }, // Используем правильный фильтр
+        { $match: mongoFilter },
         { $unwind: '$specifications' },
         { $match: { 'specifications.name': specName } },
         { $group: { _id: '$specifications.value' } },
@@ -111,7 +107,7 @@ const getFilters = asyncHandler(async (req, res) => {
 
     if (values.length > 0) {
       filters[field.key] = {
-        label: field.label,
+        label: field.label, // Возвращаем объект { en: ..., ru: ... }
         values: values
       };
     }

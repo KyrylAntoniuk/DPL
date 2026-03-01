@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import { usePayOrderMutation } from '../redux/api/ordersApiSlice';
 import Loader from './Loader';
 
 const CheckoutForm = ({ orderId, clientSecret }) => {
   const stripe = useStripe();
   const elements = useElements();
+  const { t } = useTranslation(); // Хук
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
 
   const [message, setMessage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Лог при монтировании
   useEffect(() => {
     console.log('CheckoutForm mounted');
   }, []);
@@ -44,8 +45,8 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
         toast.error(error.message);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('CheckoutForm: Payment succeeded', paymentIntent);
-        setMessage('Оплата прошла успешно!');
-        toast.success('Оплата прошла успешно!');
+        setMessage(t('payment.success')); // Перевод
+        toast.success(t('payment.success')); // Перевод
         
         await payOrder({
           orderId,
@@ -59,11 +60,11 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
         console.log('CheckoutForm: Order updated in DB');
       } else {
         console.log('CheckoutForm: Unexpected state', paymentIntent);
-        setMessage('Неожиданное состояние.');
+        setMessage(t('payment.unexpected')); // Перевод
       }
     } catch (err) {
       console.error('CheckoutForm: Exception', err);
-      toast.error(err.message || 'Произошла ошибка при оплате');
+      toast.error(err.message || t('common.error'));
     }
 
     setIsProcessing(false);
@@ -71,12 +72,10 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
 
   return (
     <form id="payment-form" onSubmit={handleSubmit}>
-      {/* Отладочный текст */}
-      <div style={{ border: '1px solid blue', padding: '10px', marginBottom: '10px' }}>
-        <small>Stripe Form Container</small>
+      <div style={{ border: '1px solid #e0e0e0', padding: '15px', marginBottom: '15px', borderRadius: '5px' }}>
         <PaymentElement id="payment-element" />
       </div>
-
+      
       <Button 
         disabled={isProcessing || !stripe || !elements} 
         id="submit" 
@@ -84,7 +83,7 @@ const CheckoutForm = ({ orderId, clientSecret }) => {
         type="submit"
       >
         <span id="button-text">
-          {isProcessing ? <Loader /> : 'Оплатить сейчас'}
+          {isProcessing ? <Loader /> : t('payment.payNow')}
         </span>
       </Button>
       {message && <div id="payment-message" className="text-danger mt-2">{message}</div>}

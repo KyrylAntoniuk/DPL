@@ -3,6 +3,7 @@ import { LinkContainer } from 'react-router-bootstrap';
 import { Table, Button } from 'react-bootstrap';
 import { FaTrash, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import SearchAndSort from '../../components/SearchAndSort';
@@ -10,34 +11,32 @@ import { useGetUsersQuery, useDeleteUserMutation } from '../../redux/api/usersAp
 import useTitle from '../../hooks/useTitle';
 
 const UserListPage = () => {
-  useTitle('Пользователи');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('admin.users'));
   const { data: users, refetch, isLoading, error } = useGetUsersQuery();
   const [deleteUser, { isLoading: loadingDelete }] = useDeleteUserMutation();
 
-  // Состояние для поиска и сортировки
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
 
   const deleteHandler = async (id) => {
-    if (window.confirm('Вы уверены, что хотите удалить пользователя?')) {
+    if (window.confirm(t('admin.confirmDeleteUser'))) {
       try {
         await deleteUser(id);
         refetch();
-        toast.success('Пользователь удален');
+        toast.success(t('admin.userDeleted'));
       } catch (err) {
         toast.error(err?.data?.message || err.error);
       }
     }
   };
 
-  // Логика фильтрации и сортировки
   const filteredUsers = useMemo(() => {
     if (!users) return [];
 
     let result = [...users];
 
-    // Поиск
     if (search) {
       const lowerSearch = search.toLowerCase();
       result = result.filter(u => 
@@ -46,7 +45,6 @@ const UserListPage = () => {
       );
     }
 
-    // Сортировка
     result.sort((a, b) => {
       let valA = a[sort];
       let valB = b[sort];
@@ -63,14 +61,14 @@ const UserListPage = () => {
   }, [users, search, sort, sortDirection]);
 
   const sortOptions = [
-    { value: 'name', label: 'Имя' },
-    { value: 'email', label: 'Email' },
-    { value: 'role', label: 'Роль' },
+    { value: 'name', label: t('auth.name') },
+    { value: 'email', label: t('auth.email') },
+    { value: 'role', label: 'Role' }, // Можно добавить в перевод
   ];
 
   return (
     <>
-      <h1>Пользователи</h1>
+      <h1>{t('admin.users')}</h1>
       
       <SearchAndSort 
         search={search}
@@ -92,9 +90,9 @@ const UserListPage = () => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>ИМЯ</th>
-              <th>EMAIL</th>
-              <th>АДМИН</th>
+              <th>{t('auth.name').toUpperCase()}</th>
+              <th>{t('auth.email').toUpperCase()}</th>
+              <th>ADMIN</th>
               <th></th>
             </tr>
           </thead>

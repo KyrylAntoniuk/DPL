@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Form, Button, Row, Col, Card } from 'react-bootstrap';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Loader from '../../components/Loader';
 import FormContainer from '../../components/FormContainer';
 import { useCreateProductMutation } from '../../redux/api/productsApiSlice';
 
-// Вспомогательный компонент для управления опциями варианта
-const VariantOptions = ({ variantIndex, control, register }) => {
+const VariantOptions = ({ variantIndex, control, register, t }) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `variants.${variantIndex}.options`,
@@ -21,14 +21,14 @@ const VariantOptions = ({ variantIndex, control, register }) => {
           <Col md={5}>
             <Form.Control
               type="text"
-              placeholder="Название опции (напр. Цвет)"
+              placeholder={t('admin.addOption')} // Используем перевод
               {...register(`variants.${variantIndex}.options.${optionIndex}.key`)}
             />
           </Col>
           <Col md={5}>
             <Form.Control
               type="text"
-              placeholder="Значение (напр. Синий)"
+              placeholder="Value"
               {...register(`variants.${variantIndex}.options.${optionIndex}.value`)}
             />
           </Col>
@@ -45,13 +45,14 @@ const VariantOptions = ({ variantIndex, control, register }) => {
         size="sm"
         onClick={() => append({ key: '', value: '' })}
       >
-        Добавить опцию
+        {t('admin.addOption')}
       </Button>
     </>
   );
 };
 
 const ProductCreatePage = () => {
+  const { t } = useTranslation(); // Хук
   const navigate = useNavigate();
   const [createProduct, { isLoading: loadingCreate }] = useCreateProductMutation();
 
@@ -78,7 +79,6 @@ const ProductCreatePage = () => {
   });
 
   const onSubmit = async (data) => {
-    // Трансформируем данные перед отправкой
     const transformedData = {
       ...data,
       variants: data.variants.map(variant => ({
@@ -92,7 +92,7 @@ const ProductCreatePage = () => {
 
     try {
       await createProduct(transformedData).unwrap();
-      toast.success('Товар успешно создан');
+      toast.success(t('admin.productCreated'));
       navigate('/admin/products');
     } catch (err) {
       toast.error(err?.data?.message || err.error);
@@ -102,74 +102,71 @@ const ProductCreatePage = () => {
   return (
     <>
       <Link to="/admin/products" className="btn btn-light my-3">
-        Назад
+        {t('common.back')}
       </Link>
       <FormContainer>
-        <h1>Создать товар</h1>
+        <h1>{t('admin.createProductTitle')}</h1>
         {loadingCreate && <Loader />}
         <Form onSubmit={handleSubmit(onSubmit)}>
-          {/* --- Основная информация --- */}
           <div className="form-section">
-            <h4>Основная информация</h4>
+            <h4>{t('admin.basicInfo')}</h4>
             <Form.Group controlId="name" className="my-2">
-              <Form.Label>Название</Form.Label>
-              <Form.Control type="text" {...register('name', { required: 'Название обязательно' })} />
+              <Form.Label>{t('auth.name')}</Form.Label>
+              <Form.Control type="text" {...register('name', { required: true })} />
             </Form.Group>
             <Row>
-              <Col><Form.Group controlId="basePrice" className="my-2"><Form.Label>Базовая цена</Form.Label><Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} /></Form.Group></Col>
-              <Col><Form.Group controlId="brand" className="my-2"><Form.Label>Бренд</Form.Label><Form.Control type="text" {...register('brand')} /></Form.Group></Col>
-              <Col><Form.Group controlId="category" className="my-2"><Form.Label>Категория</Form.Label><Form.Control type="text" {...register('category')} /></Form.Group></Col>
+              <Col><Form.Group controlId="basePrice" className="my-2"><Form.Label>{t('admin.basePrice')}</Form.Label><Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} /></Form.Group></Col>
+              <Col><Form.Group controlId="brand" className="my-2"><Form.Label>{t('admin.brand')}</Form.Label><Form.Control type="text" {...register('brand')} /></Form.Group></Col>
+              <Col><Form.Group controlId="category" className="my-2"><Form.Label>{t('admin.category')}</Form.Label><Form.Control type="text" {...register('category')} /></Form.Group></Col>
             </Row>
-            <Form.Group controlId="description" className="my-2"><Form.Label>Описание</Form.Label><Form.Control as="textarea" rows={3} {...register('description')} /></Form.Group>
+            <Form.Group controlId="description" className="my-2"><Form.Label>{t('product.description')}</Form.Label><Form.Control as="textarea" rows={3} {...register('description')} /></Form.Group>
           </div>
 
-          {/* --- Характеристики --- */}
           <div className="form-section">
-            <h4>Характеристики</h4>
+            <h4>{t('product.specifications')}</h4>
             {specFields.map((field, index) => (
               <Row key={field.id} className="dynamic-row align-items-center mb-2">
-                <Col md={5}><Form.Control type="text" placeholder="Название (напр. Диагональ)" {...register(`specifications.${index}.key`)} /></Col>
-                <Col md={5}><Form.Control type="text" placeholder="Значение (напр. 6.1`)" {...register(`specifications.${index}.value`)} /></Col>
-                <Col md={2}><Button variant="danger" onClick={() => removeSpec(index)}>Удалить</Button></Col>
+                <Col md={5}><Form.Control type="text" placeholder="Name" {...register(`specifications.${index}.key`)} /></Col>
+                <Col md={5}><Form.Control type="text" placeholder="Value" {...register(`specifications.${index}.value`)} /></Col>
+                <Col md={2}><Button variant="danger" onClick={() => removeSpec(index)}>{t('common.delete')}</Button></Col>
               </Row>
             ))}
-            <Button type="button" onClick={() => appendSpec({ key: '', value: '' })}>Добавить характеристику</Button>
+            <Button type="button" onClick={() => appendSpec({ key: '', value: '' })}>{t('admin.addSpec')}</Button>
           </div>
 
-          {/* --- Модификации товара --- */}
           <div className="form-section">
-            <h4>Модификации товара</h4>
+            <h4>{t('admin.variants')}</h4>
             {variantFields.map((field, index) => (
               <Card key={field.id} className="variant-card">
                 <Card.Header>
                   <div className="d-flex justify-content-between">
-                    Модификация #{index + 1}
-                    <Button variant="danger" size="sm" onClick={() => removeVariant(index)}>Удалить модификацию</Button>
+                    Variant #{index + 1}
+                    <Button variant="danger" size="sm" onClick={() => removeVariant(index)}>{t('common.delete')}</Button>
                   </div>
                 </Card.Header>
                 <Card.Body>
                   <Row>
                     <Col md={6}>
-                      <h6>Опции</h6>
-                      <VariantOptions variantIndex={index} control={control} register={register} />
+                      <h6>{t('admin.options')}</h6>
+                      <VariantOptions variantIndex={index} control={control} register={register} t={t} />
                     </Col>
                     <Col md={6}>
-                      <h6>Параметры</h6>
-                      <Form.Group><Form.Label>Цена</Form.Label><Form.Control type="number" step="0.01" {...register(`variants.${index}.price`, { valueAsNumber: true })} /></Form.Group>
-                      <Form.Group className="mt-2"><Form.Label>На складе</Form.Label><Form.Control type="number" {...register(`variants.${index}.countInStock`, { valueAsNumber: true })} /></Form.Group>
-                      <Form.Group className="mt-2"><Form.Label>URL изображения</Form.Label><Form.Control type="text" placeholder="Оставьте пустым, чтобы использовать главное" {...register(`variants.${index}.image`)} /></Form.Group>
+                      <h6>{t('admin.parameters')}</h6>
+                      <Form.Group><Form.Label>{t('product.price')}</Form.Label><Form.Control type="number" step="0.01" {...register(`variants.${index}.price`, { valueAsNumber: true })} /></Form.Group>
+                      <Form.Group className="mt-2"><Form.Label>{t('product.inStock')}</Form.Label><Form.Control type="number" {...register(`variants.${index}.countInStock`, { valueAsNumber: true })} /></Form.Group>
+                      <Form.Group className="mt-2"><Form.Label>Image URL</Form.Label><Form.Control type="text" {...register(`variants.${index}.image`)} /></Form.Group>
                     </Col>
                   </Row>
                 </Card.Body>
               </Card>
             ))}
             <Button type="button" onClick={() => appendVariant({ options: [{ key: '', value: '' }], price: 0, countInStock: 0, image: '' })}>
-              Добавить модификацию
+              {t('admin.addVariant')}
             </Button>
           </div>
 
           <Button type="submit" variant="primary" className="mt-3">
-            Создать товар
+            {t('common.create')}
           </Button>
         </Form>
       </FormContainer>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import { useRegisterMutation } from '../redux/api/usersApiSlice';
 import { setCredentials } from '../redux/slices/authSlice';
 import Loader from '../components/Loader';
@@ -10,7 +11,8 @@ import FormContainer from '../components/FormContainer';
 import useTitle from '../hooks/useTitle';
 
 const RegisterPage = () => {
-  useTitle('Регистрация');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('auth.signUp'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +22,7 @@ const RegisterPage = () => {
   const dispatch = useDispatch();
 
   const [register, { isLoading }] = useRegisterMutation();
+
   const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -32,64 +35,64 @@ const RegisterPage = () => {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast.error('Пароли не совпадают');
-      return;
-    }
-    try {
-      const res = await register({ name, email, password }).unwrap();
-      dispatch(setCredentials({ ...res }));
-      navigate('/');
-      toast.success('Вы успешно зарегистрировались и вошли в систему!');
-    } catch (err) {
-      toast.error(err?.data?.message || err.error);
+    } else {
+      try {
+        const res = await register({ name, email, password }).unwrap();
+        dispatch(setCredentials({ ...res }));
+        navigate('/');
+        toast.success('Регистрация прошла успешно!');
+      } catch (err) {
+        toast.error(err?.data?.message || err.error);
+      }
     }
   };
 
   return (
     <FormContainer>
-      <h1>Регистрация</h1>
+      <h1>{t('auth.signUp')}</h1>
       <Form onSubmit={submitHandler}>
         <Form.Group className="my-2" controlId="name">
-          <Form.Label>Имя</Form.Label>
+          <Form.Label>{t('auth.name')}</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Введите имя"
+            placeholder={t('auth.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Form.Group className="my-2" controlId="email">
-          <Form.Label>Email адрес</Form.Label>
+          <Form.Label>{t('auth.email')}</Form.Label>
           <Form.Control
             type="email"
-            placeholder="Введите email"
+            placeholder={t('auth.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Form.Group className="my-2" controlId="password">
-          <Form.Label>Пароль</Form.Label>
+          <Form.Label>{t('auth.password')}</Form.Label>
           <Form.Control
             type="password"
-            placeholder="Введите пароль"
+            placeholder={t('auth.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Form.Group className="my-2" controlId="confirmPassword">
-          <Form.Label>Подтвердите пароль</Form.Label>
+          <Form.Label>{t('auth.confirmPassword')}</Form.Label>
           <Form.Control
             type="password"
-            placeholder="Подтвердите пароль"
+            placeholder={t('auth.confirmPassword')}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
 
         <Button type="submit" variant="primary" className="mt-2" disabled={isLoading}>
-          Зарегистрироваться
+          {t('auth.register')}
         </Button>
 
         {isLoading && <Loader />}
@@ -97,7 +100,7 @@ const RegisterPage = () => {
 
       <Row className="py-3">
         <Col>
-          Уже есть аккаунт? <Link to="/login">Войти</Link>
+          {t('auth.haveAccount')} <Link to="/login">{t('auth.login')}</Link>
         </Col>
       </Row>
     </FormContainer>

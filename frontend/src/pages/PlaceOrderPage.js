@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Button, Row, Col, ListGroup, Image, Card } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../components/Message';
 import CheckoutSteps from '../components/CheckoutSteps';
 import Loader from '../components/Loader';
@@ -11,7 +12,8 @@ import { clearCartItems } from '../redux/slices/cartSlice';
 import useTitle from '../hooks/useTitle';
 
 const PlaceOrderPage = () => {
-  useTitle('Подтверждение заказа');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('placeOrder.title'));
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart);
@@ -32,14 +34,13 @@ const PlaceOrderPage = () => {
         orderItems: cart.cartItems.map(item => ({
           ...item,
           product: item._id,
-          price: item.basePrice,
-          image: item.generalImages[0],
-          // variantId: item.variantId || null, // Если у вас есть варианты
+          price: item.price, // Используем актуальную цену (с учетом варианта)
+          image: item.image,
+          options: item.options, // Передаем выбранные опции
         })),
         shippingAddress: {
           ...cart.shippingAddress,
-          street: cart.shippingAddress.address, // Маппим street на address
-          deliveryService: 'Default' // Добавляем заглушку
+          street: cart.shippingAddress.address,
         },
         paymentMethod: cart.paymentMethod,
         itemsPrice: cart.itemsPrice,
@@ -61,24 +62,24 @@ const PlaceOrderPage = () => {
         <Col md={8}>
           <ListGroup variant="flush">
             <ListGroup.Item>
-              <h2>Доставка</h2>
+              <h2>{t('placeOrder.shipping')}</h2>
               <p>
-                <strong>Адрес: </strong>
+                <strong>{t('shipping.address')}: </strong>
                 {cart.shippingAddress.address}, {cart.shippingAddress.city}{' '}
                 {cart.shippingAddress.postalCode}, {cart.shippingAddress.country}
               </p>
             </ListGroup.Item>
 
             <ListGroup.Item>
-              <h2>Способ оплаты</h2>
-              <strong>Метод: </strong>
-              {cart.paymentMethod}
+              <h2>{t('placeOrder.payment')}</h2>
+              <strong>{t('payment.title')}: </strong>
+              {cart.paymentMethod === 'Card' ? t('payment.card') : t('payment.cash')}
             </ListGroup.Item>
 
             <ListGroup.Item>
-              <h2>Товары в заказе</h2>
+              <h2>{t('placeOrder.orderItems')}</h2>
               {cart.cartItems.length === 0 ? (
-                <Message>Ваша корзина пуста</Message>
+                <Message>{t('cart.empty')}</Message>
               ) : (
                 <ListGroup variant="flush">
                   {cart.cartItems.map((item, index) => (
@@ -86,7 +87,7 @@ const PlaceOrderPage = () => {
                       <Row>
                         <Col md={1}>
                           <Image
-                            src={item.generalImages[0]}
+                            src={item.image}
                             alt={item.name}
                             fluid
                             rounded
@@ -94,9 +95,14 @@ const PlaceOrderPage = () => {
                         </Col>
                         <Col>
                           <Link to={`/product/${item._id}`}>{item.name}</Link>
+                          {item.options && (
+                            <div className="text-muted small">
+                              {Object.entries(item.options).map(([key, value]) => `${key}: ${value}`).join(', ')}
+                            </div>
+                          )}
                         </Col>
                         <Col md={4}>
-                          {item.qty} x ${item.basePrice} = ${item.qty * item.basePrice}
+                          {item.qty} x ${item.price} = ${(item.qty * item.price).toFixed(2)}
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -110,29 +116,29 @@ const PlaceOrderPage = () => {
           <Card>
             <ListGroup variant="flush">
               <ListGroup.Item>
-                <h2>Сводка по заказу</h2>
+                <h2>{t('placeOrder.summary')}</h2>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
-                  <Col>Товары:</Col>
+                  <Col>{t('placeOrder.items')}:</Col>
                   <Col>${cart.itemsPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
-                  <Col>Доставка:</Col>
+                  <Col>{t('shipping.cost')}:</Col>
                   <Col>${cart.shippingPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
-                  <Col>Налог:</Col>
+                  <Col>{t('placeOrder.tax')}:</Col>
                   <Col>${cart.taxPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
-                  <Col>Итого:</Col>
+                  <Col>{t('placeOrder.total')}:</Col>
                   <Col>${cart.totalPrice}</Col>
                 </Row>
               </ListGroup.Item>
@@ -148,7 +154,7 @@ const PlaceOrderPage = () => {
                   disabled={cart.cartItems.length === 0}
                   onClick={placeOrderHandler}
                 >
-                  Оформить заказ
+                  {t('placeOrder.place')}
                 </Button>
                 {isLoading && <Loader />}
               </ListGroup.Item>

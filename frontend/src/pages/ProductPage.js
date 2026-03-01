@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Row, Col, Image, ListGroup, Card, Button, Form, Table } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { useTranslation, Trans } from 'react-i18next'; // Импорт Trans для сложных строк
 import { useGetProductDetailsQuery, useCreateReviewMutation } from '../redux/api/productsApiSlice';
 import { addToCart } from '../redux/slices/cartSlice';
 import Rating from '../components/Rating';
@@ -16,6 +17,7 @@ const ProductPage = () => {
   const { id: productId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation(); // Хук
 
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState({});
@@ -26,7 +28,7 @@ const ProductPage = () => {
   const [createReview, { isLoading: loadingReview }] = useCreateReviewMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
-  useTitle(product ? product.name : 'Товар');
+  useTitle(product ? product.name : t('home.title'));
 
   // --- ЛОГИКА РАБОТЫ С ВАРИАНТАМИ ---
 
@@ -38,14 +40,12 @@ const ProductPage = () => {
 
     product.variants.forEach(variant => {
       if (variant.options) {
-        // Ищем ключ цвета
         const colorKey = Object.keys(variant.options).find(k => k.toLowerCase() === 'цвет' || k.toLowerCase() === 'color');
         
         if (colorKey) {
           colors.add(variant.options[colorKey]);
         }
 
-        // Собираем остальные опции
         for (const key in variant.options) {
           if (key.toLowerCase() !== 'color' && key.toLowerCase() !== 'цвет') {
             if (!others[key]) others[key] = new Set();
@@ -66,7 +66,6 @@ const ProductPage = () => {
     if (product?.variants?.length > 0) {
       const defaultOptions = {};
       
-      // Если есть цвета, выбираем первый
       if (colorOptions.length > 0) {
         const defaultColor = colorOptions[0];
         const firstVariant = product.variants[0];
@@ -76,7 +75,6 @@ const ProductPage = () => {
         }
       }
 
-      // Заполняем остальные опции из первого подходящего варианта
       const baseVariant = product.variants.find(v => {
           if (colorOptions.length === 0) return true;
           const cKey = Object.keys(v.options).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет');
@@ -96,10 +94,9 @@ const ProductPage = () => {
     }
   }, [product, colorOptions]);
 
-  // --- ИСПРАВЛЕНО: Максимально простая логика выбора ---
   const handleOptionSelect = (key, value) => {
-    // Просто обновляем выбранную опцию. Никакой автомагии.
-    setSelectedOptions(prev => ({ ...prev, [key]: value }));
+    const newOptions = { ...selectedOptions, [key]: value };
+    setSelectedOptions(newOptions);
     setQty(1);
   };
 
@@ -142,7 +139,7 @@ const ProductPage = () => {
     };
     dispatch(addToCart(itemToAdd));
     navigate('/cart');
-    toast.success('Товар добавлен в корзину');
+    toast.success(t('product.addToCart') + '!');
   };
 
   const submitReviewHandler = async (e) => {
@@ -150,7 +147,7 @@ const ProductPage = () => {
     try {
       await createReview({ productId, rating, comment }).unwrap();
       refetch();
-      toast.success('Отзыв успешно добавлен!');
+      toast.success(t('product.reviewSuccess'));
       setRating(0);
       setComment('');
     } catch (err) {
@@ -164,7 +161,7 @@ const ProductPage = () => {
 
   return (
     <>
-      <Link className="btn btn-light my-3" to="/">Назад</Link>
+      <Link className="btn btn-light my-3" to="/">{t('common.back')}</Link>
       {isLoading ? <Loader /> : error ? <Message variant="danger">{error?.data?.message || error.error}</Message> : (
         <>
           <Row>
@@ -175,13 +172,12 @@ const ProductPage = () => {
             <Col md={4}>
               <ListGroup variant="flush">
                 <ListGroup.Item><h3>{product.name}</h3></ListGroup.Item>
-                <ListGroup.Item><Rating value={product.rating} text={`${product.numReviews} отзывов`} /></ListGroup.Item>
-                <ListGroup.Item>Цена: ${currentPrice}</ListGroup.Item>
+                <ListGroup.Item><Rating value={product.rating} text={`${product.numReviews} ${t('product.reviews').toLowerCase()}`} /></ListGroup.Item>
+                <ListGroup.Item>{t('product.price')}: ${currentPrice}</ListGroup.Item>
                 
-                {/* Рендерим выбор цвета */}
                 {colorOptions.length > 0 && (
                   <ListGroup.Item>
-                    <h5>Цвет:</h5>
+                    <h5>{t('product.color')}:</h5>
                     {colorOptions.map(color => {
                         const colorKey = Object.keys(selectedOptions).find(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'цвет') || 'Цвет';
                         return (
@@ -198,7 +194,6 @@ const ProductPage = () => {
                   </ListGroup.Item>
                 )}
 
-                {/* Рендерим другие группы опций */}
                 {Object.entries(otherOptions).map(([key, values]) => (
                   <ListGroup.Item key={key}>
                     <h5>{key}:</h5>
@@ -216,12 +211,11 @@ const ProductPage = () => {
                   </ListGroup.Item>
                 ))}
 
-                <ListGroup.Item>Описание: {product.description}</ListGroup.Item>
+                <ListGroup.Item>{t('product.description')}: {product.description}</ListGroup.Item>
                 
-                {/* --- ОТОБРАЖЕНИЕ ХАРАКТЕРИСТИК --- */}
                 {product.specifications && product.specifications.length > 0 && (
                   <ListGroup.Item>
-                    <h5>Характеристики:</h5>
+                    <h5>{t('product.specifications')}:</h5>
                     <Table striped bordered hover size="sm">
                       <tbody>
                         {product.specifications.map(spec => (
@@ -239,12 +233,12 @@ const ProductPage = () => {
             <Col md={3}>
               <Card>
                 <ListGroup variant="flush">
-                  <ListGroup.Item><Row><Col>Цена:</Col><Col><strong>${currentPrice}</strong></Col></Row></ListGroup.Item>
-                  <ListGroup.Item><Row><Col>Статус:</Col><Col>{countInStock > 0 ? 'В наличии' : 'Нет в наличии'}</Col></Row></ListGroup.Item>
+                  <ListGroup.Item><Row><Col>{t('product.price')}:</Col><Col><strong>${currentPrice}</strong></Col></Row></ListGroup.Item>
+                  <ListGroup.Item><Row><Col>{t('product.status')}:</Col><Col>{countInStock > 0 ? t('product.inStock') : t('product.outOfStock')}</Col></Row></ListGroup.Item>
                   {countInStock > 0 && (
                     <ListGroup.Item>
                       <Row>
-                        <Col>Кол-во</Col>
+                        <Col>{t('product.qty')}</Col>
                         <Col>
                           <Form.Control as="select" value={qty} onChange={(e) => setQty(Number(e.target.value))}>
                             {[...Array(countInStock).keys()].map((x) => (<option key={x + 1} value={x + 1}>{x + 1}</option>))}
@@ -254,7 +248,7 @@ const ProductPage = () => {
                     </ListGroup.Item>
                   )}
                   <ListGroup.Item>
-                    <Button className="btn-block" type="button" disabled={!currentVariant || countInStock === 0} onClick={addToCartHandler}>Добавить в корзину</Button>
+                    <Button className="btn-block" type="button" disabled={countInStock === 0} onClick={addToCartHandler}>{t('product.addToCart')}</Button>
                   </ListGroup.Item>
                 </ListGroup>
               </Card>
@@ -262,8 +256,8 @@ const ProductPage = () => {
           </Row>
           <Row className="review mt-4">
             <Col md={6}>
-              <h2>Отзывы</h2>
-              {product.reviews && product.reviews.length === 0 && <Message>Отзывов пока нет</Message>}
+              <h2>{t('product.reviews')}</h2>
+              {product.reviews && product.reviews.length === 0 && <Message>{t('product.noReviews')}</Message>}
               <ListGroup variant="flush">
                 {product.reviews && product.reviews.map((review) => (
                   <ListGroup.Item key={review._id}>
@@ -274,22 +268,26 @@ const ProductPage = () => {
                   </ListGroup.Item>
                 ))}
                 <ListGroup.Item>
-                  <h2>Оставьте свой отзыв</h2>
+                  <h2>{t('product.writeReview')}</h2>
                   {loadingReview && <Loader />}
                   {userInfo ? (
                     <Form onSubmit={submitReviewHandler}>
                       <Form.Group controlId="rating" className="my-2">
-                        <Form.Label>Оценка</Form.Label>
+                        <Form.Label>{t('product.rating')}</Form.Label>
                         <RatingSelect value={rating} onChange={setRating} />
                       </Form.Group>
                       <Form.Group controlId="comment" className="my-2">
-                        <Form.Label>Комментарий</Form.Label>
+                        <Form.Label>{t('product.comment')}</Form.Label>
                         <Form.Control as="textarea" rows={3} required value={comment} onChange={(e) => setComment(e.target.value)}></Form.Control>
                       </Form.Group>
-                      <Button disabled={loadingReview} type="submit" variant="primary">Отправить</Button>
+                      <Button disabled={loadingReview} type="submit" variant="primary">{t('product.submit')}</Button>
                     </Form>
                   ) : (
-                    <Message>Пожалуйста, <Link to="/login">войдите</Link>, чтобы оставить отзыв</Message>
+                    <Message>
+                      <Trans i18nKey="product.loginToReview">
+                        Please <Link to="/login">sign in</Link> to write a review
+                      </Trans>
+                    </Message>
                   )}
                 </ListGroup.Item>
               </ListGroup>

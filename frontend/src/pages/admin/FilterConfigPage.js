@@ -44,32 +44,46 @@ const FilterConfigPage = () => {
       {loadingUpdate && <Loader />}
       <Form onSubmit={handleSubmit(onSubmit)}>
         {fields.map((field, index) => (
-          <Row key={field.id} className="mb-2 align-items-center">
-            <Col md={5}>
-              <Form.Control
-                type="text"
-                placeholder="Ключ в БД (напр. specifications.RAM)"
-                {...register(`filterableFields.${index}.key`, { required: true })}
-              />
-            </Col>
-            <Col md={5}>
-              <Form.Control
-                type="text"
-                placeholder="Название (напр. Оперативная память)"
-                {...register(`filterableFields.${index}.label`, { required: true })}
-              />
-            </Col>
-            <Col md={2}>
-              <Button variant="danger" onClick={() => remove(index)}>Удалить</Button>
-            </Col>
-          </Row>
+          <div key={field.id} className="mb-3 p-3 border rounded">
+            <Row className="mb-2">
+              <Col>
+                <Form.Label>Ключ в БД</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="specifications.RAM"
+                  {...register(`filterableFields.${index}.key`, { required: true })}
+                />
+              </Col>
+              <Col xs="auto" className="d-flex align-items-end">
+                <Button variant="danger" onClick={() => remove(index)}>Удалить</Button>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Form.Label>Название (EN)</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="RAM"
+                  {...register(`filterableFields.${index}.label.en`, { required: true })}
+                />
+              </Col>
+              <Col>
+                <Form.Label>Название (RU)</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Оперативная память"
+                  {...register(`filterableFields.${index}.label.ru`, { required: true })}
+                />
+              </Col>
+            </Row>
+          </div>
         ))}
         
         <Button 
           type="button" 
           variant="outline-secondary" 
           className="mb-3"
-          onClick={() => append({ key: '', label: '' })}
+          onClick={() => append({ key: '', label: { en: '', ru: '' } })}
         >
           Добавить фильтр
         </Button>

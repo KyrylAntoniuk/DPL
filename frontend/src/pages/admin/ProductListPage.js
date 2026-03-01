@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Table, Button, Row, Col } from 'react-bootstrap';
 import { FaEdit, FaTrash, FaFileImport } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
-import SearchAndSort from '../../components/SearchAndSort'; // Импорт компонента
+import SearchAndSort from '../../components/SearchAndSort';
 import {
   useGetProductsQuery,
   useDeleteProductMutation,
@@ -15,13 +16,13 @@ import {
 import useTitle from '../../hooks/useTitle';
 
 const ProductListPage = () => {
-  useTitle('Товары');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('admin.products'));
   const navigate = useNavigate();
   const { data, isLoading, error, refetch } = useGetProductsQuery({});
   const [deleteProduct, { isLoading: loadingDelete }] = useDeleteProductMutation();
   const [importProducts, { isLoading: loadingImport }] = useImportProductsMutation();
 
-  // Состояние для поиска и сортировки
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -31,11 +32,11 @@ const ProductListPage = () => {
   };
 
   const deleteHandler = async (id) => {
-    if (window.confirm('Вы уверены, что хотите удалить товар?')) {
+    if (window.confirm(t('admin.confirmDelete'))) {
       try {
         await deleteProduct(id);
         refetch();
-        toast.success('Товар удален');
+        toast.success(t('admin.productDeleted'));
       } catch (err) {
         toast.error(err?.data?.message || err.error);
       }
@@ -51,23 +52,21 @@ const ProductListPage = () => {
       try {
         const json = JSON.parse(event.target.result);
         await importProducts(json).unwrap();
-        toast.success('Товары успешно импортированы');
+        toast.success(t('admin.productCreated')); // Используем похожий ключ или добавим новый
         refetch();
       } catch (err) {
-        toast.error('Ошибка импорта: ' + (err?.data?.message || err.message || 'Неверный формат JSON'));
+        toast.error(t('common.error') + ': ' + (err?.data?.message || err.message));
       }
     };
     reader.readAsText(file);
     e.target.value = null;
   };
 
-  // Логика фильтрации и сортировки
   const filteredProducts = useMemo(() => {
     if (!data?.products) return [];
 
     let result = [...data.products];
 
-    // Поиск
     if (search) {
       const lowerSearch = search.toLowerCase();
       result = result.filter(p => 
@@ -77,7 +76,6 @@ const ProductListPage = () => {
       );
     }
 
-    // Сортировка
     result.sort((a, b) => {
       let valA = a[sort];
       let valB = b[sort];
@@ -94,17 +92,17 @@ const ProductListPage = () => {
   }, [data, search, sort, sortDirection]);
 
   const sortOptions = [
-    { value: 'name', label: 'Название' },
-    { value: 'basePrice', label: 'Цена' },
-    { value: 'category', label: 'Категория' },
-    { value: 'brand', label: 'Бренд' },
+    { value: 'name', label: t('auth.name') }, // Используем общие ключи
+    { value: 'basePrice', label: t('product.price') },
+    { value: 'category', label: t('home.category') },
+    { value: 'brand', label: t('admin.brand') },
   ];
 
   return (
     <>
       <Row className="align-items-center">
         <Col>
-          <h1>Товары</h1>
+          <h1>{t('admin.products')}</h1>
         </Col>
         <Col className="text-end">
           <input
@@ -119,16 +117,15 @@ const ProductListPage = () => {
             variant="outline-primary"
             onClick={() => document.getElementById('json-upload').click()}
           >
-            <FaFileImport /> Импорт JSON
+            <FaFileImport /> {t('admin.importJson')}
           </Button>
 
           <Button className="btn-sm m-3" onClick={createProductHandler}>
-            <FaEdit /> Создать товар
+            <FaEdit /> {t('admin.createProduct')}
           </Button>
         </Col>
       </Row>
 
-      {/* Компонент поиска и сортировки */}
       <SearchAndSort 
         search={search}
         setSearch={setSearch}
@@ -151,10 +148,10 @@ const ProductListPage = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>НАЗВАНИЕ</th>
-                <th>ЦЕНА</th>
-                <th>КАТЕГОРИЯ</th>
-                <th>БРЕНД</th>
+                <th>{t('auth.name').toUpperCase()}</th>
+                <th>{t('product.price').toUpperCase()}</th>
+                <th>{t('home.category').toUpperCase()}</th>
+                <th>{t('admin.brand').toUpperCase()}</th>
                 <th></th>
               </tr>
             </thead>

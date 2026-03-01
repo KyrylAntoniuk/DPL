@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Form, Button, Row, Col, Tab, Nav, Badge } from 'react-bootstrap'; // Добавил Badge
+import { Table, Form, Button, Row, Col, Tab, Nav, Badge } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next'; // Импорт
 import Message from '../components/Message';
 import Loader from '../components/Loader';
 import ProductCard from '../components/ProductCard';
@@ -12,7 +13,8 @@ import { setCredentials } from '../redux/slices/authSlice';
 import useTitle from '../hooks/useTitle';
 
 const ProfilePage = () => {
-  useTitle('Профиль пользователя');
+  const { t } = useTranslation(); // Хук
+  useTitle(t('profile.title'));
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +36,7 @@ const ProfilePage = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error('Пароли не совпадают');
+      toast.error('Пароли не совпадают'); // Можно тоже перевести
     } else {
       try {
         const res = await updateProfile({ _id: userInfo._id, name, email, password }).unwrap();
@@ -46,7 +48,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Функция для выбора цвета бейджа в зависимости от статуса
   const getStatusVariant = (status) => {
     switch (status) {
       case 'Новый': return 'primary';
@@ -61,25 +62,25 @@ const ProfilePage = () => {
   return (
     <Row>
       <Col md={3}>
-        <h2>Профиль</h2>
+        <h2>{t('profile.title')}</h2>
         <Form onSubmit={submitHandler}>
           <Form.Group className="my-2" controlId="name">
-            <Form.Label>Имя</Form.Label>
-            <Form.Control type="text" placeholder="Введите имя" value={name} onChange={(e) => setName(e.target.value)}></Form.Control>
+            <Form.Label>{t('auth.name')}</Form.Label>
+            <Form.Control type="text" placeholder={t('auth.name')} value={name} onChange={(e) => setName(e.target.value)}></Form.Control>
           </Form.Group>
           <Form.Group className="my-2" controlId="email">
-            <Form.Label>Email</Form.Label>
-            <Form.Control type="email" placeholder="Введите email" value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
+            <Form.Label>{t('auth.email')}</Form.Label>
+            <Form.Control type="email" placeholder={t('auth.email')} value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
           </Form.Group>
           <Form.Group className="my-2" controlId="password">
-            <Form.Label>Новый пароль</Form.Label>
-            <Form.Control type="password" placeholder="Введите пароль" value={password} onChange={(e) => setPassword(e.target.value)}></Form.Control>
+            <Form.Label>{t('auth.password')}</Form.Label>
+            <Form.Control type="password" placeholder={t('auth.password')} value={password} onChange={(e) => setPassword(e.target.value)}></Form.Control>
           </Form.Group>
           <Form.Group className="my-2" controlId="confirmPassword">
-            <Form.Label>Подтвердите пароль</Form.Label>
-            <Form.Control type="password" placeholder="Подтвердите пароль" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}></Form.Control>
+            <Form.Label>{t('auth.confirmPassword')}</Form.Label>
+            <Form.Control type="password" placeholder={t('auth.confirmPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}></Form.Control>
           </Form.Group>
-          <Button type="submit" variant="primary">Обновить</Button>
+          <Button type="submit" variant="primary">{t('auth.update')}</Button>
           {loadingUpdateProfile && <Loader />}
         </Form>
       </Col>
@@ -87,24 +88,24 @@ const ProfilePage = () => {
         <Tab.Container id="profile-tabs" defaultActiveKey="orders">
           <Nav variant="pills" className="mb-3">
             <Nav.Item>
-              <Nav.Link eventKey="orders">Мои заказы</Nav.Link>
+              <Nav.Link eventKey="orders">{t('profile.myOrders')}</Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link eventKey="favorites">Избранное</Nav.Link>
+              <Nav.Link eventKey="favorites">{t('profile.favorites')}</Nav.Link>
             </Nav.Item>
           </Nav>
           <Tab.Content>
             <Tab.Pane eventKey="orders">
-              <h2>Мои заказы</h2>
+              <h2>{t('profile.myOrders')}</h2>
               {loadingOrders ? <Loader /> : errorOrders ? <Message variant="danger">{errorOrders?.data?.message || errorOrders.error}</Message> : (
                 <Table striped hover responsive className="table-sm">
                   <thead>
                     <tr>
                       <th>ID</th>
-                      <th>ДАТА</th>
-                      <th>ИТОГО</th>
-                      <th>ОПЛАЧЕНО</th>
-                      <th>СТАТУС</th> {/* Заменили ДОСТАВЛЕНО на СТАТУС */}
+                      <th>{t('order.date')}</th>
+                      <th>{t('placeOrder.total')}</th>
+                      <th>{t('order.paid')}</th>
+                      <th>{t('order.status')}</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -122,7 +123,6 @@ const ProfilePage = () => {
                           )}
                         </td>
                         <td>
-                          {/* Отображаем статус заказа */}
                           <Badge bg={getStatusVariant(order.status)}>
                             {order.status}
                           </Badge>
@@ -130,7 +130,7 @@ const ProfilePage = () => {
                         <td>
                           <LinkContainer to={`/order/${order._id}`}>
                             <Button className="btn-sm" variant="light">
-                              Детали
+                              {t('profile.details')}
                             </Button>
                           </LinkContainer>
                         </td>
@@ -141,9 +141,9 @@ const ProfilePage = () => {
               )}
             </Tab.Pane>
             <Tab.Pane eventKey="favorites">
-              <h2>Избранное</h2>
+              <h2>{t('profile.favorites')}</h2>
               {!userInfo?.favorites || userInfo.favorites.length === 0 ? (
-                <Message>Список избранного пуст</Message>
+                <Message>{t('profile.noFavorites')}</Message>
               ) : (
                 <Row>
                   {userInfo.favorites.map(product => (

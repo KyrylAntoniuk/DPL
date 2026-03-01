@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'; // Добавил useNavigate
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Row, Col } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { useGetProductsQuery } from '../redux/api/productsApiSlice';
 import ProductCard from '../components/ProductCard';
 import Loader from '../components/Loader';
@@ -12,7 +13,8 @@ import useTitle from '../hooks/useTitle';
 const HomePage = () => {
   const { pageNumber, keyword, category } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate(); // Хук для навигации
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const queryParams = {
     pageNumber: pageNumber || 1,
@@ -38,7 +40,8 @@ const HomePage = () => {
 
   const { data, isLoading, error } = useGetProductsQuery(queryParams);
   
-  useTitle(category ? `Категория: ${category}` : 'Главная');
+  // Переводим категорию в заголовке
+  useTitle(category ? `${t('home.title')}: ${t(`categories.${category}`, category)}` : t('home.title'));
 
   const handleSetFilters = (newFilters) => {
     const params = {};
@@ -50,11 +53,7 @@ const HomePage = () => {
     
     setSearchParams(params);
 
-    // ИСПРАВЛЕНО: Если мы не на первой странице, сбрасываем на первую
     if (pageNumber && pageNumber !== '1') {
-      // Формируем новый URL. 
-      // Если есть категория, сохраняем её. Если есть поиск, сохраняем его.
-      // Но убираем /page/X
       let newPath = '/';
       if (category) {
         newPath = `/catalog/${category}`;
@@ -62,8 +61,6 @@ const HomePage = () => {
         newPath = `/search/${keyword}`;
       }
       
-      // Переходим на новый путь с сохранением query-параметров
-      // createSearchParams превращает объект params в строку запроса
       navigate({
         pathname: newPath,
         search: new URLSearchParams(params).toString()
@@ -88,7 +85,7 @@ const HomePage = () => {
       </Col>
 
       <Col md={9}>
-        <h1>Каталог товаров</h1>
+        <h1>{t('home.title')}</h1>
         {isLoading ? (
           <Loader />
         ) : error ? (
@@ -98,7 +95,7 @@ const HomePage = () => {
         ) : (
           <>
             {data.products.length === 0 ? (
-              <Message>Товары не найдены</Message>
+              <Message>{t('home.noProducts')}</Message>
             ) : (
               <Row>
                 {data.products.map((product) => (

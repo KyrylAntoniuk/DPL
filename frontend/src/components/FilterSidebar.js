@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next'; // Импорт
 import { useGetProductCategoriesQuery, useGetDynamicFiltersQuery } from '../redux/api/productsApiSlice';
 import useDebounce from '../hooks/useDebounce';
 import Loader from './Loader';
 import Message from './Message';
 
 const FilterSidebar = ({ filters, setFilters }) => {
+  const { t, i18n } = useTranslation(); // Хук
   const { data: categories, isLoading: isLoadingCategories, error: errorCategories } = useGetProductCategoriesQuery();
   
   const { data: dynamicFilters, isLoading: isLoadingFilters } = useGetDynamicFiltersQuery(filters);
@@ -56,33 +58,33 @@ const FilterSidebar = ({ filters, setFilters }) => {
 
   return (
     <div className="filter-sidebar">
-      <h4>Фильтры</h4>
+      <h4>{t('header.filters')}</h4>
       <hr />
 
-      <h5>Поиск</h5>
+      <h5>{t('common.search')}</h5>
       <Form.Group>
         <Form.Control
           type="text"
-          placeholder="Название товара..."
+          placeholder={t('common.search')}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
       </Form.Group>
       <hr />
 
-      <h5>Категория</h5>
-      {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">Ошибка</Message> : (
+      <h5>{t('home.category')}</h5>
+      {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">{t('common.error')}</Message> : (
         <Form.Group>
           {categories?.map(category => (
             <Form.Check
               key={category}
-              type="radio" // Используем radio для одиночного выбора
+              type="radio"
               name="category"
               id={`category-${category}`}
-              label={category}
+              // Переводим категорию. Если перевода нет, выводим оригинал.
+              label={t(`categories.${category}`, category)}
               value={category}
               checked={filters.category === category}
-              // Логика сброса при клике на уже выбранный элемент
               onClick={() => {
                 if (filters.category === category) {
                   const newFilters = { ...filters };
@@ -100,7 +102,7 @@ const FilterSidebar = ({ filters, setFilters }) => {
       {/* Динамические фильтры */}
       {isLoadingFilters ? <Loader /> : dynamicFilters && Object.entries(dynamicFilters).map(([key, filterData]) => (
         <div key={key}>
-          <h5>{filterData.label}</h5>
+          <h5>{filterData.label[i18n.language] || filterData.label.en || filterData.label}</h5>
           <Form.Group>
             {filterData.values.map(val => (
               <Form.Check
@@ -120,7 +122,7 @@ const FilterSidebar = ({ filters, setFilters }) => {
       ))}
 
       <Button variant="outline-secondary" onClick={handleResetFilters} className="w-100">
-        Сбросить все фильтры
+        {t('common.resetFilters')}
       </Button>
     </div>
   );
