@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
 import { Table, Button } from 'react-bootstrap';
 import { FaTrash, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
+import SearchAndSort from '../../components/SearchAndSort';
 import { useGetUsersQuery, useDeleteUserMutation } from '../../redux/api/usersApiSlice';
 import useTitle from '../../hooks/useTitle';
 
@@ -12,6 +13,11 @@ const UserListPage = () => {
   useTitle('Пользователи');
   const { data: users, refetch, isLoading, error } = useGetUsersQuery();
   const [deleteUser, { isLoading: loadingDelete }] = useDeleteUserMutation();
+
+  // Состояние для поиска и сортировки
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   const deleteHandler = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить пользователя?')) {
@@ -25,9 +31,57 @@ const UserListPage = () => {
     }
   };
 
+  // Логика фильтрации и сортировки
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+
+    let result = [...users];
+
+    // Поиск
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = result.filter(u => 
+        u.name.toLowerCase().includes(lowerSearch) ||
+        u.email.toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    // Сортировка
+    result.sort((a, b) => {
+      let valA = a[sort];
+      let valB = b[sort];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [users, search, sort, sortDirection]);
+
+  const sortOptions = [
+    { value: 'name', label: 'Имя' },
+    { value: 'email', label: 'Email' },
+    { value: 'role', label: 'Роль' },
+  ];
+
   return (
     <>
       <h1>Пользователи</h1>
+      
+      <SearchAndSort 
+        search={search}
+        setSearch={setSearch}
+        sort={sort}
+        setSort={setSort}
+        sortOptions={sortOptions}
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
+      />
+
       {loadingDelete && <Loader />}
       {isLoading ? (
         <Loader />
@@ -45,7 +99,7 @@ const UserListPage = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <tr key={user._id}>
                 <td>{user._id}</td>
                 <td>{user.name}</td>

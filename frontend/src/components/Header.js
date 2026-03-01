@@ -66,6 +66,9 @@ const Header = () => {
                   <LinkContainer to="/admin/orders">
                     <NavDropdown.Item>Заказы</NavDropdown.Item>
                   </LinkContainer>
+                  <LinkContainer to="/admin/filters">
+                    <NavDropdown.Item>Фильтры</NavDropdown.Item>
+                  </LinkContainer>
                   {userInfo.role === 'admin' && (
                     <LinkContainer to="/admin/users">
                       <NavDropdown.Item>Пользователи</NavDropdown.Item>

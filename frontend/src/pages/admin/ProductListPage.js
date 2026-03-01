@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Row, Col } from 'react-bootstrap';
@@ -6,10 +6,11 @@ import { FaEdit, FaTrash, FaFileImport } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
+import SearchAndSort from '../../components/SearchAndSort'; // Импорт компонента
 import {
   useGetProductsQuery,
   useDeleteProductMutation,
-  useImportProductsMutation, // Импортируем хук
+  useImportProductsMutation,
 } from '../../redux/api/productsApiSlice';
 import useTitle from '../../hooks/useTitle';
 
@@ -19,6 +20,11 @@ const ProductListPage = () => {
   const { data, isLoading, error, refetch } = useGetProductsQuery({});
   const [deleteProduct, { isLoading: loadingDelete }] = useDeleteProductMutation();
   const [importProducts, { isLoading: loadingImport }] = useImportProductsMutation();
+
+  // Состояние для поиска и сортировки
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   const createProductHandler = () => {
     navigate('/admin/product/create');
@@ -52,8 +58,47 @@ const ProductListPage = () => {
       }
     };
     reader.readAsText(file);
-    e.target.value = null; // Сбрасываем инпут
+    e.target.value = null;
   };
+
+  // Логика фильтрации и сортировки
+  const filteredProducts = useMemo(() => {
+    if (!data?.products) return [];
+
+    let result = [...data.products];
+
+    // Поиск
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(lowerSearch) ||
+        p.brand.toLowerCase().includes(lowerSearch) ||
+        p.category.toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    // Сортировка
+    result.sort((a, b) => {
+      let valA = a[sort];
+      let valB = b[sort];
+
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+
+      if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+      if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [data, search, sort, sortDirection]);
+
+  const sortOptions = [
+    { value: 'name', label: 'Название' },
+    { value: 'basePrice', label: 'Цена' },
+    { value: 'category', label: 'Категория' },
+    { value: 'brand', label: 'Бренд' },
+  ];
 
   return (
     <>
@@ -83,6 +128,17 @@ const ProductListPage = () => {
         </Col>
       </Row>
 
+      {/* Компонент поиска и сортировки */}
+      <SearchAndSort 
+        search={search}
+        setSearch={setSearch}
+        sort={sort}
+        setSort={setSort}
+        sortOptions={sortOptions}
+        sortDirection={sortDirection}
+        setSortDirection={setSortDirection}
+      />
+
       {loadingDelete && <Loader />}
       {loadingImport && <Loader />}
       {isLoading ? (
@@ -103,7 +159,7 @@ const ProductListPage = () => {
               </tr>
             </thead>
             <tbody>
-              {data.products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product._id}>
                   <td>{product._id}</td>
                   <td>{product.name}</td>

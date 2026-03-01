@@ -30,6 +30,26 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 60,
     }),
+    // --- Новые эндпоинты для динамических фильтров ---
+    getFilterConfig: builder.query({
+      query: () => ({
+        url: '/api/filters/config',
+      }),
+    }),
+    updateFilterConfig: builder.mutation({
+      query: (data) => ({
+        url: '/api/filters/config',
+        method: 'PUT',
+        body: data,
+      }),
+    }),
+    getDynamicFilters: builder.query({
+      query: (params) => ({
+        url: '/api/filters',
+        params,
+      }),
+    }),
+    // ------------------------------------------------
     createReview: builder.mutation({
       query: (data) => ({
         url: `${PRODUCTS_URL}/${data.productId}/reviews`,
@@ -54,7 +74,7 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Product'],
     }),
-    importProducts: builder.mutation({ // <-- Новая мутация
+    importProducts: builder.mutation({
       query: (products) => ({
         url: `${PRODUCTS_URL}/import`,
         method: 'POST',
@@ -77,9 +97,12 @@ export const {
   useGetProductDetailsQuery,
   useGetProductCategoriesQuery,
   useGetProductFiltersQuery,
+  useGetFilterConfigQuery, // <-- Экспорт
+  useUpdateFilterConfigMutation, // <-- Экспорт
+  useGetDynamicFiltersQuery, // <-- Экспорт
   useCreateReviewMutation,
   useUpdateProductMutation,
   useCreateProductMutation,
-  useImportProductsMutation, // <-- Экспорт
+  useImportProductsMutation,
   useDeleteProductMutation,
 } = productsApiSlice;

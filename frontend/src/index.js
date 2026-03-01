@@ -27,8 +27,8 @@ import PlaceOrderPage from './pages/PlaceOrderPage';
 import OrderPage from './pages/OrderPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage'; // Импорт
-import ResetPasswordPage from './pages/ResetPasswordPage'; // Импорт
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 // Защищенные маршруты
 import PrivateRoute from './components/PrivateRoute';
@@ -42,6 +42,7 @@ import UserListPage from './pages/admin/UserListPage';
 import UserEditPage from './pages/admin/UserEditPage';
 import ProductEditPage from './pages/admin/ProductEditPage';
 import ProductCreatePage from './pages/admin/ProductCreatePage';
+import FilterConfigPage from './pages/admin/FilterConfigPage'; // Импорт
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -56,8 +57,8 @@ const router = createBrowserRouter(
             <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgotpassword" element={<ForgotPasswordPage />} /> {/* Новый маршрут */}
-            <Route path="/resetpassword/:token" element={<ResetPasswordPage />} /> {/* Новый маршрут */}
+            <Route path="/forgotpassword" element={<ForgotPasswordPage />} />
+            <Route path="/resetpassword/:token" element={<ResetPasswordPage />} />
 
             {/* Приватные маршруты */}
             <Route path="" element={<PrivateRoute />}>
@@ -74,6 +75,7 @@ const router = createBrowserRouter(
                 <Route path="/admin/products" element={<ProductListPage />} />
                 <Route path="/admin/product/create" element={<ProductCreatePage />} />
                 <Route path="/admin/product/:id/edit" element={<ProductEditPage />} />
+                <Route path="/admin/filters" element={<FilterConfigPage />} /> {/* Новый маршрут */}
             </Route>
 
             {/* Маршруты только для Админа */}

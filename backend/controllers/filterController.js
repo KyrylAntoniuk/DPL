@@ -1,91 +1,90 @@
 import asyncHandler from 'express-async-handler';
-import Filter from '../models/filterModel.js';
+import FilterConfig from '../models/filterConfigModel.js';
+import Product from '../models/productModel.js';
 
-// @desc    Получить фильтры для категории
-// @route   GET /api/filters/:category
+// @desc    Получить конфигурацию фильтров
+// @route   GET /api/filters/config
 // @access  Public
-const getFiltersByCategory = asyncHandler(async (req, res) => {
-  const filters = await Filter.findOne({ category: req.params.category });
-
-  if (filters) {
-    res.json(filters);
-  } else {
-    res.status(404);
-    throw new Error('Фильтры для этой категории не найдены');
+const getFilterConfig = asyncHandler(async (req, res) => {
+  // Ищем конфиг или создаем дефолтный
+  let config = await FilterConfig.findOne();
+  if (!config) {
+    config = await FilterConfig.create({
+      filterableFields: [
+        { key: 'brand', label: 'Бренд' }
+      ]
+    });
   }
+  res.json(config);
 });
 
-// @desc    Создать конфигурацию фильтров
-// @route   POST /api/filters
-// @access  Private/Manager/Admin
-const createFilter = asyncHandler(async (req, res) => {
-  const { category, filterGroups } = req.body;
-
-  const filterExists = await Filter.findOne({ category });
-
-  if (filterExists) {
-    res.status(400);
-    throw new Error('Фильтры для этой категории уже существуют');
+// @desc    Обновить конфигурацию фильтров
+// @route   PUT /api/filters/config
+// @access  Private/Admin
+const updateFilterConfig = asyncHandler(async (req, res) => {
+  const { filterableFields } = req.body;
+  
+  let config = await FilterConfig.findOne();
+  if (!config) {
+    config = new FilterConfig();
   }
 
-  const filter = await Filter.create({
-    category,
-    filterGroups,
-  });
+  config.filterableFields = filterableFields;
+  await config.save();
 
-  if (filter) {
-    res.status(201).json(filter);
-  } else {
-    res.status(400);
-    throw new Error('Неверные данные фильтра');
-  }
+  res.json(config);
 });
 
-// @desc    Обновить фильтры
-// @route   PUT /api/filters/:id
-// @access  Private/Manager/Admin
-const updateFilter = asyncHandler(async (req, res) => {
-  const filter = await Filter.findById(req.params.id);
-
-  if (filter) {
-    filter.category = req.body.category || filter.category;
-    filter.filterGroups = req.body.filterGroups || filter.filterGroups;
-
-    const updatedFilter = await filter.save();
-    res.json(updatedFilter);
-  } else {
-    res.status(404);
-    throw new Error('Фильтр не найден');
-  }
-});
-
-// @desc    Получить все фильтры (для админки)
+// @desc    Получить значения для фильтров (динамически)
 // @route   GET /api/filters
-// @access  Private/Manager/Admin
+// @access  Public
 const getFilters = asyncHandler(async (req, res) => {
-  const filters = await Filter.find({});
+  const queryParams = { ...req.query };
+  // Удаляем служебные параметры, если они есть
+  delete queryParams.pageNumber;
+  delete queryParams.keyword;
+
+  // Получаем конфиг
+  let config = await FilterConfig.findOne();
+  if (!config) {
+    config = { filterableFields: [{ key: 'brand', label: 'Бренд' }] };
+  }
+
+  const filters = {};
+
+  // Для каждого настроенного поля собираем уникальные значения
+  for (const field of config.filterableFields) {
+    let values = [];
+
+    if (field.key === 'brand') {
+      // Для бренда логика простая
+      values = await Product.find(queryParams).distinct('brand');
+    } else if (field.key.startsWith('specifications.')) {
+      // Для характеристик сложнее: нужно искать внутри массива specifications
+      // Ключ будет, например, "specifications.RAM" -> ищем спецификацию с name="RAM"
+      const specName = field.key.split('.')[1];
+      
+      // Агрегация MongoDB для извлечения уникальных значений характеристик
+      const result = await Product.aggregate([
+        { $match: queryParams }, // Фильтруем товары (например, по категории)
+        { $unwind: '$specifications' }, // Разворачиваем массив характеристик
+        { $match: { 'specifications.name': specName } }, // Ищем нужную характеристику
+        { $group: { _id: '$specifications.value' } }, // Группируем по значению
+        { $sort: { _id: 1 } } // Сортируем
+      ]);
+      
+      values = result.map(item => item._id);
+    }
+
+    if (values.length > 0) {
+      filters[field.key] = {
+        label: field.label,
+        values: values
+      };
+    }
+  }
+
   res.json(filters);
 });
 
-// @desc    Удалить фильтр
-// @route   DELETE /api/filters/:id
-// @access  Private/Admin
-const deleteFilter = asyncHandler(async (req, res) => {
-  const filter = await Filter.findById(req.params.id);
-
-  if (filter) {
-    await Filter.deleteOne({ _id: filter._id });
-    res.json({ message: 'Фильтр удален' });
-  } else {
-    res.status(404);
-    throw new Error('Фильтр не найден');
-  }
-});
-
-export { 
-  getFiltersByCategory, 
-  createFilter, 
-  updateFilter, 
-  getFilters, 
-  deleteFilter 
-};
+export { getFilterConfig, updateFilterConfig, getFilters };

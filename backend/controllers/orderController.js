@@ -1,8 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
+import Product from '../models/productModel.js';
 import sendEmail from '../utils/sendEmail.js';
 
-// --- Вспомогательная функция для генерации HTML письма ---
 const generateOrderEmailHtml = (order, title) => {
   const itemsList = order.orderItems.map(item => `
     <tr>
@@ -52,11 +52,46 @@ const generateOrderEmailHtml = (order, title) => {
     </div>
   `;
 };
-// ---------------------------------------------------------
 
-// @desc    Создать новый заказ
-// @route   POST /api/orders
-// @access  Private (только авторизованные пользователи)
+// --- Функция для обновления остатков на складе ---
+const updateStock = async (orderItems) => {
+  for (const item of orderItems) {
+    const product = await Product.findById(item.product);
+
+    if (product) {
+      let variant = null;
+
+      if (item.variantId) {
+        variant = product.variants.id(item.variantId);
+      }
+
+      if (!variant && item.options) {
+        variant = product.variants.find(v => {
+          return JSON.stringify(v.options) === JSON.stringify(item.options);
+        });
+      }
+
+      if (variant) {
+        // Проверка наличия
+        if (variant.countInStock < item.qty) {
+          throw new Error(`Товара "${item.name}" (вариант) недостаточно на складе. Доступно: ${variant.countInStock}`);
+        }
+        variant.countInStock -= item.qty;
+      } else {
+        // Проверка наличия для простого товара
+        if (product.countInStock < item.qty) {
+          throw new Error(`Товара "${item.name}" недостаточно на складе. Доступно: ${product.countInStock}`);
+        }
+        product.countInStock -= item.qty;
+      }
+      
+      await product.save();
+    } else {
+      throw new Error(`Товар "${item.name}" не найден`);
+    }
+  }
+};
+
 const addOrderItems = asyncHandler(async (req, res) => {
   const {
     orderItems,
@@ -71,6 +106,10 @@ const addOrderItems = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('Нет товаров для заказа');
   } else {
+    // Если updateStock выбросит ошибку, выполнение прервется, и заказ не создастся
+    // asyncHandler перехватит ошибку и отправит её на фронтенд
+    await updateStock(orderItems);
+
     const order = new Order({
       user: req.user._id,
       orderItems,
@@ -83,7 +122,6 @@ const addOrderItems = asyncHandler(async (req, res) => {
 
     const createdOrder = await order.save();
 
-    // Отправка красивого HTML письма
     await sendEmail({
       to: req.user.email,
       subject: `DPL Shop: Заказ #${createdOrder._id} оформлен`,
@@ -95,9 +133,6 @@ const addOrderItems = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Получить заказ по ID
-// @route   GET /api/orders/:id
-// @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate(
     'user',
@@ -121,9 +156,6 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Обновить статус заказа на "Оплачен"
-// @route   PUT /api/orders/:id/pay
-// @access  Private
 const updateOrderToPaid = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate('user', 'email name');
 
@@ -139,7 +171,6 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Отправка письма об оплате
     await sendEmail({
       to: order.user.email,
       subject: `DPL Shop: Оплата заказа #${order._id} получена`,
@@ -154,9 +185,6 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Обновить статус заказа
-// @route   PUT /api/orders/:id/status
-// @access  Private/Manager/Admin
 const updateOrderStatus = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate('user', 'email name');
 
@@ -169,7 +197,6 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Отправка письма о смене статуса
     await sendEmail({
       to: order.user.email,
       subject: `DPL Shop: Статус заказа #${order._id} обновлен`,
@@ -184,17 +211,11 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Получить список заказов текущего пользователя
-// @route   GET /api/orders/myorders
-// @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
   res.json(orders);
 });
 
-// @desc    Получить все заказы (для панели управления)
-// @route   GET /api/orders
-// @access  Private/Manager/Admin
 const getOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({}).populate('user', 'id name');
   res.json(orders);

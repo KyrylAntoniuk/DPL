@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import { useGetProductCategoriesQuery, useGetProductFiltersQuery } from '../redux/api/productsApiSlice';
-import useDebounce from '../hooks/useDebounce'; // 1. Импорт
+import { useGetProductCategoriesQuery, useGetDynamicFiltersQuery } from '../redux/api/productsApiSlice';
+import useDebounce from '../hooks/useDebounce';
 import Loader from './Loader';
 import Message from './Message';
 
 const FilterSidebar = ({ filters, setFilters }) => {
   const { data: categories, isLoading: isLoadingCategories, error: errorCategories } = useGetProductCategoriesQuery();
-  const { data: dynamicFilters, isLoading: isLoadingFilters, error: errorFilters } = useGetProductFiltersQuery(
-      { category: filters.category },
-      { skip: !filters.category }
-  );
+  
+  const { data: dynamicFilters, isLoading: isLoadingFilters } = useGetDynamicFiltersQuery(filters);
 
-  // 2. Локальное состояние для поля поиска
   const [keyword, setKeyword] = useState(filters.keyword || '');
-  const debouncedKeyword = useDebounce(keyword, 500); // 3. Применяем debounce
+  const debouncedKeyword = useDebounce(keyword, 500);
 
-  // 4. Эффект, который сработает только после паузы во вводе
   useEffect(() => {
     handleFilterChange({ target: { name: 'keyword', value: debouncedKeyword } });
   }, [debouncedKeyword]);
@@ -26,7 +22,16 @@ const FilterSidebar = ({ filters, setFilters }) => {
     let newFilters = { ...filters };
 
     if (type === 'checkbox') {
-      const currentValues = newFilters[name] || [];
+      // Гарантируем, что currentValues - это массив
+      let currentValues = newFilters[name];
+      
+      if (!currentValues) {
+        currentValues = [];
+      } else if (!Array.isArray(currentValues)) {
+        // Если пришла строка (один параметр в URL), превращаем в массив
+        currentValues = [currentValues];
+      }
+
       if (checked) {
         newFilters[name] = [...currentValues, value];
       } else {
@@ -35,9 +40,10 @@ const FilterSidebar = ({ filters, setFilters }) => {
     } else {
       newFilters[name] = value;
     }
-
+    
     if (name === 'category') {
-      delete newFilters.brand;
+      // При смене категории можно сбрасывать другие фильтры
+      // delete newFilters.brand; 
     }
 
     setFilters(newFilters);
@@ -48,71 +54,75 @@ const FilterSidebar = ({ filters, setFilters }) => {
     setFilters({});
   };
 
+  // Вспомогательная функция для проверки, выбран ли чекбокс
+  const isChecked = (key, val) => {
+    const filterValue = filters[key];
+    if (!filterValue) return false;
+    if (Array.isArray(filterValue)) return filterValue.includes(val);
+    return filterValue === val;
+  };
+
   return (
-      <div className="filter-sidebar">
-        <h4>Фильтры</h4>
-        <hr />
+    <div className="filter-sidebar">
+      <h4>Фильтры</h4>
+      <hr />
 
-        {/* Поиск по названию */}
-        <h5>Поиск</h5>
+      <h5>Поиск</h5>
+      <Form.Group>
+        <Form.Control
+          type="text"
+          placeholder="Название товара..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
+      </Form.Group>
+      <hr />
+
+      <h5>Категория</h5>
+      {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">Ошибка</Message> : (
         <Form.Group>
-          <Form.Control
-              type="text"
-              placeholder="Название товара..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-          />
+          {categories?.map(category => (
+            <Form.Check
+              key={category}
+              type="radio"
+              name="category"
+              id={`category-${category}`}
+              label={category}
+              value={category}
+              checked={filters.category === category}
+              onChange={handleFilterChange}
+            />
+          ))}
         </Form.Group>
-        <hr />
+      )}
+      <hr />
 
-        {/* Фильтр по категориям */}
-        <h5>Категория</h5>
-        {isLoadingCategories ? <Loader /> : errorCategories ? <Message variant="danger">Ошибка</Message> : (
-            <Form.Group>
-              {categories?.map(category => (
-                  <Form.Check
-                      key={category}
-                      type="radio"
-                      name="category"
-                      id={`category-${category}`}
-                      label={category}
-                      value={category}
-                      checked={filters.category === category}
-                      onChange={handleFilterChange}
-                  />
-              ))}
-            </Form.Group>
-        )}
-        <hr />
+      {/* Динамические фильтры */}
+      {isLoadingFilters ? <Loader /> : dynamicFilters && Object.entries(dynamicFilters).map(([key, filterData]) => (
+        <div key={key}>
+          <h5>{filterData.label}</h5>
+          <Form.Group>
+            {filterData.values.map(val => (
+              <Form.Check
+                key={val}
+                type="checkbox"
+                name={key}
+                id={`${key}-${val}`}
+                label={val}
+                value={val}
+                checked={isChecked(key, val)} // Используем безопасную проверку
+                onChange={handleFilterChange}
+              />
+            ))}
+          </Form.Group>
+          <hr />
+        </div>
+      ))}
 
-        {/* Фильтр по брендам */}
-        {filters.category && (
-            <>
-              <h5>Бренд</h5>
-              {isLoadingFilters ? <Loader /> : errorFilters ? <Message variant="danger">Ошибка</Message> : (
-                  <Form.Group>
-                    {dynamicFilters?.brands?.map(brand => (
-                        <Form.Check
-                            key={brand}
-                            type="checkbox"
-                            name="brand"
-                            id={`brand-${brand}`}
-                            label={brand}
-                            value={brand}
-                            checked={(filters.brand || []).includes(brand)}
-                            onChange={handleFilterChange}
-                        />
-                    ))}
-                  </Form.Group>
-              )}
-              <hr />
-            </>
-        )}
-
-        <Button variant="outline-secondary" onClick={handleResetFilters} className="w-100">
-          Сбросить все фильтры
-        </Button>
-      </div>
+      <Button variant="outline-secondary" onClick={handleResetFilters} className="w-100">
+        Сбросить все фильтры
+      </Button>
+    </div>
   );
 };
 
