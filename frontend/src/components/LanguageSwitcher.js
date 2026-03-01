@@ -12,7 +12,7 @@ const LanguageSwitcher = () => {
 
   return (
     <NavDropdown 
-      title={<span><FaGlobe /> {i18n.language === 'uk' ? 'UK' : 'EN'}</span>} 
+      title={<span><FaGlobe /> {i18n.language === 'uk' ? 'UA' : 'EN'}</span>} // Исправлено UK на UA
       id="language-switcher"
     >
       <NavDropdown.Item onClick={() => changeLanguage('en')}>English</NavDropdown.Item>

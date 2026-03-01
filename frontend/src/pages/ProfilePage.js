@@ -1,52 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Form, Button, Row, Col, Tab, Nav, Badge } from 'react-bootstrap';
+import React, { useEffect } from 'react';
+import { Table, Row, Col, Tab, Nav, Badge, Button } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next'; // Импорт
+import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import Message from '../components/Message';
 import Loader from '../components/Loader';
 import ProductCard from '../components/ProductCard';
-import { useUpdateProfileMutation } from '../redux/api/usersApiSlice';
 import { useGetMyOrdersQuery } from '../redux/api/ordersApiSlice';
-import { setCredentials } from '../redux/slices/authSlice';
 import useTitle from '../hooks/useTitle';
 
 const ProfilePage = () => {
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
   useTitle(t('profile.title'));
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
-
-  const [updateProfile, { isLoading: loadingUpdateProfile }] = useUpdateProfileMutation();
   const { data: orders, isLoading: loadingOrders, error: errorOrders } = useGetMyOrdersQuery();
-
-  useEffect(() => {
-    if (userInfo) {
-      setName(userInfo.name);
-      setEmail(userInfo.email);
-    }
-  }, [userInfo]);
-
-  const submitHandler = async (e) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error('Пароли не совпадают'); // Можно тоже перевести
-    } else {
-      try {
-        const res = await updateProfile({ _id: userInfo._id, name, email, password }).unwrap();
-        dispatch(setCredentials(res));
-        toast.success('Профиль успешно обновлен');
-      } catch (err) {
-        toast.error(err?.data?.message || err.error);
-      }
-    }
-  };
 
   const getStatusVariant = (status) => {
     switch (status) {
@@ -61,30 +29,8 @@ const ProfilePage = () => {
 
   return (
     <Row>
-      <Col md={3}>
-        <h2>{t('profile.title')}</h2>
-        <Form onSubmit={submitHandler}>
-          <Form.Group className="my-2" controlId="name">
-            <Form.Label>{t('auth.name')}</Form.Label>
-            <Form.Control type="text" placeholder={t('auth.name')} value={name} onChange={(e) => setName(e.target.value)}></Form.Control>
-          </Form.Group>
-          <Form.Group className="my-2" controlId="email">
-            <Form.Label>{t('auth.email')}</Form.Label>
-            <Form.Control type="email" placeholder={t('auth.email')} value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
-          </Form.Group>
-          <Form.Group className="my-2" controlId="password">
-            <Form.Label>{t('auth.password')}</Form.Label>
-            <Form.Control type="password" placeholder={t('auth.password')} value={password} onChange={(e) => setPassword(e.target.value)}></Form.Control>
-          </Form.Group>
-          <Form.Group className="my-2" controlId="confirmPassword">
-            <Form.Label>{t('auth.confirmPassword')}</Form.Label>
-            <Form.Control type="password" placeholder={t('auth.confirmPassword')} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}></Form.Control>
-          </Form.Group>
-          <Button type="submit" variant="primary">{t('auth.update')}</Button>
-          {loadingUpdateProfile && <Loader />}
-        </Form>
-      </Col>
-      <Col md={9}>
+      <Col md={12}>
+        <h2 className="mb-4">{t('profile.title')}</h2>
         <Tab.Container id="profile-tabs" defaultActiveKey="orders">
           <Nav variant="pills" className="mb-3">
             <Nav.Item>
@@ -96,7 +42,6 @@ const ProfilePage = () => {
           </Nav>
           <Tab.Content>
             <Tab.Pane eventKey="orders">
-              <h2>{t('profile.myOrders')}</h2>
               {loadingOrders ? <Loader /> : errorOrders ? <Message variant="danger">{errorOrders?.data?.message || errorOrders.error}</Message> : (
                 <Table striped hover responsive className="table-sm">
                   <thead>
@@ -141,13 +86,12 @@ const ProfilePage = () => {
               )}
             </Tab.Pane>
             <Tab.Pane eventKey="favorites">
-              <h2>{t('profile.favorites')}</h2>
               {!userInfo?.favorites || userInfo.favorites.length === 0 ? (
                 <Message>{t('profile.noFavorites')}</Message>
               ) : (
                 <Row>
                   {userInfo.favorites.map(product => (
-                    <Col key={product._id} sm={12} md={6} lg={4}>
+                    <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
                       <ProductCard product={product} />
                     </Col>
                   ))}

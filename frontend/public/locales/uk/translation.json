@@ -5,7 +5,7 @@
     "profile": "Профіль",
     "logout": "Вийти",
     "admin": "Адмін",
-    "products": "Товари",
+    "products": "Товары",
     "orders": "Замовлення",
     "users": "Користувачі",
     "filters": "Фільтри",
@@ -19,6 +19,9 @@
   "product": {
     "addToCart": "Додати в кошик",
     "reviews": "Відгуки",
+    "reviewsCount_one": "{{count}} відгук",
+    "reviewsCount_few": "{{count}} відгуки",
+    "reviewsCount_many": "{{count}} відгуків",
     "writeReview": "Залишити відгук",
     "rating": "Оцінка",
     "comment": "Коментар",
@@ -87,7 +90,7 @@
     "title": "Підтвердження замовлення",
     "shipping": "Доставка",
     "payment": "Спосіб оплати",
-    "orderItems": "Товари в замовленні",
+    "orderItems": "Товары в замовленні",
     "summary": "Зведення замовлення",
     "items": "Товари",
     "tax": "Податок",
@@ -140,7 +143,7 @@
     "filterConfig": "Налаштування фільтрів",
     "dbKey": "Ключ в БД",
     "nameEn": "Назва (EN)",
-    "nameRu": "Назва (UK)",
+    "nameRu": "Назва (UA)",
     "addFilter": "Додати фільтр"
   },
   "common": {

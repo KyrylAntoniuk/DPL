@@ -19,6 +19,8 @@
   "product": {
     "addToCart": "Add to Cart",
     "reviews": "Reviews",
+    "reviewsCount_one": "{{count}} review",
+    "reviewsCount_other": "{{count}} reviews",
     "writeReview": "Write a Customer Review",
     "rating": "Rating",
     "comment": "Comment",
@@ -140,7 +142,7 @@
     "filterConfig": "Filter Configuration",
     "dbKey": "DB Key",
     "nameEn": "Name (EN)",
-    "nameRu": "Name (RU)",
+    "nameRu": "Name (UA)",
     "addFilter": "Add Filter"
   },
   "common": {

@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Row, Col } from 'react-bootstrap';
+import { Row, Col, Button, Offcanvas } from 'react-bootstrap';
+import { FaFilter } from 'react-icons/fa'; // Импорт иконки
 import { useTranslation } from 'react-i18next';
 import { useGetProductsQuery } from '../redux/api/productsApiSlice';
 import ProductCard from '../components/ProductCard';
@@ -15,6 +16,9 @@ const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // Состояние для мобильного меню фильтров
+  const [showFilters, setShowFilters] = useState(false);
 
   const queryParams = {
     pageNumber: pageNumber || 1,
@@ -40,7 +44,6 @@ const HomePage = () => {
 
   const { data, isLoading, error } = useGetProductsQuery(queryParams);
   
-  // Переводим категорию в заголовке
   useTitle(category ? `${t('home.title')}: ${t(`categories.${category}`, category)}` : t('home.title'));
 
   const handleSetFilters = (newFilters) => {
@@ -77,7 +80,8 @@ const HomePage = () => {
 
   return (
     <Row>
-      <Col md={3}>
+      {/* ДЕСКТОП: Сайдбар (скрыт на мобильных) */}
+      <Col md={3} className="d-none d-md-block">
         <FilterSidebar 
           filters={filters} 
           setFilters={handleSetFilters} 
@@ -85,7 +89,32 @@ const HomePage = () => {
       </Col>
 
       <Col md={9}>
-        <h1>{t('home.title')}</h1>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h1>{t('home.title')}</h1>
+          
+          {/* МОБИЛЬНЫЕ: Кнопка фильтров (видна только на мобильных) */}
+          <Button 
+            variant="outline-dark" 
+            className="d-md-none" 
+            onClick={() => setShowFilters(true)}
+          >
+            <FaFilter /> {t('header.filters')}
+          </Button>
+        </div>
+
+        {/* МОБИЛЬНЫЕ: Выезжающая панель */}
+        <Offcanvas show={showFilters} onHide={() => setShowFilters(false)} placement="start">
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title>{t('header.filters')}</Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+            <FilterSidebar 
+              filters={filters} 
+              setFilters={handleSetFilters} 
+            />
+          </Offcanvas.Body>
+        </Offcanvas>
+
         {isLoading ? (
           <Loader />
         ) : error ? (

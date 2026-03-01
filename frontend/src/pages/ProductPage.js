@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Row, Col, Image, ListGroup, Card, Button, Form, Table } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { useTranslation, Trans } from 'react-i18next'; // Импорт Trans для сложных строк
+import { useTranslation, Trans } from 'react-i18next';
 import { useGetProductDetailsQuery, useCreateReviewMutation } from '../redux/api/productsApiSlice';
 import { addToCart } from '../redux/slices/cartSlice';
 import Rating from '../components/Rating';
@@ -17,7 +17,7 @@ const ProductPage = () => {
   const { id: productId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { t } = useTranslation(); // Хук
+  const { t } = useTranslation();
 
   const [qty, setQty] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState({});
@@ -29,8 +29,6 @@ const ProductPage = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
   useTitle(product ? product.name : t('home.title'));
-
-  // --- ЛОГИКА РАБОТЫ С ВАРИАНТАМИ ---
 
   const { colorOptions, otherOptions } = useMemo(() => {
     if (!product?.variants) return { colorOptions: [], otherOptions: {} };
@@ -121,8 +119,6 @@ const ProductPage = () => {
     });
   };
 
-  // --- КОНЕЦ ЛОГИКИ ---
-
   const addToCartHandler = () => {
     const variantToAdd = currentVariant || product.variants?.[0];
     
@@ -172,7 +168,12 @@ const ProductPage = () => {
             <Col md={4}>
               <ListGroup variant="flush">
                 <ListGroup.Item><h3>{product.name}</h3></ListGroup.Item>
-                <ListGroup.Item><Rating value={product.rating} text={`${product.numReviews} ${t('product.reviews').toLowerCase()}`} /></ListGroup.Item>
+                <ListGroup.Item>
+                  <Rating 
+                    value={product.rating} 
+                    text={t('product.reviewsCount', { count: product.numReviews })} 
+                  />
+                </ListGroup.Item>
                 <ListGroup.Item>{t('product.price')}: ${currentPrice}</ListGroup.Item>
                 
                 {colorOptions.length > 0 && (
