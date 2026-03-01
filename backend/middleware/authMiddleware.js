@@ -2,53 +2,46 @@ import jwt from 'jsonwebtoken';
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
-// 1. Проверка авторизации (наличия валидного токена)
+// Protect routes
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  // Проверяем заголовки запроса на наличие Bearer токена
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      // Извлекаем токен из строки "Bearer <token>"
       token = req.headers.authorization.split(' ')[1];
-
-      // Расшифровываем токен и достаем id пользователя
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Находим пользователя в БД по id (исключая поле пароля) и записываем в req.user
       req.user = await User.findById(decoded.id).select('-password');
-
-      next(); // Передаем управление следующему обработчику
+      next();
     } catch (error) {
       console.error(error);
       res.status(401);
-      throw new Error('Не авторизован, токен недействителен');
+      throw new Error('Not authorized, token failed');
     }
   }
 
   if (!token) {
     res.status(401);
-    throw new Error('Не авторизован, нет токена');
+    throw new Error('Not authorized, no token');
   }
 });
 
-// 2. Проверка прав Администратора
+// Admin middleware
 const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
   } else {
     res.status(403);
-    throw new Error('Доступ запрещен. Требуются права администратора');
+    throw new Error('Not authorized as an admin');
   }
 };
 
-// 3. Проверка прав Менеджера (менеджер или админ)
+// Manager middleware
 const manager = (req, res, next) => {
   if (req.user && (req.user.role === 'manager' || req.user.role === 'admin')) {
     next();
   } else {
     res.status(403);
-    throw new Error('Доступ запрещен. Требуются права менеджера');
+    throw new Error('Not authorized as a manager');
   }
 };
 

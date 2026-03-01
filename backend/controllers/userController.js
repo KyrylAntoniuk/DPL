@@ -1,164 +1,189 @@
 import asyncHandler from 'express-async-handler';
+import crypto from 'crypto';
 import User from '../models/userModel.js';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from '../utils/sendEmail.js';
 
-// @desc    Авторизация пользователя & получение токена
+// @desc    Auth user & get token
 // @route   POST /api/users/login
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-
-  // Ищем пользователя по email
   const user = await User.findOne({ email });
 
-  // Если пользователь найден и пароль совпадает (используем метод из модели)
   if (user && (await user.matchPassword(password))) {
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id), // Отправляем токен клиенту
+      _id: user._id, name: user.name, email: user.email, role: user.role, token: generateToken(user._id),
     });
   } else {
     res.status(401);
-    throw new Error('Неверный email или пароль');
+    throw new Error('Invalid email or password');
   }
 });
 
-// @desc    Регистрация нового пользователя
+// @desc    Register a new user
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
-
-  // Проверяем, существует ли уже такой email
   const userExists = await User.findOne({ email });
 
   if (userExists) {
     res.status(400);
-    throw new Error('Пользователь с таким email уже существует');
+    throw new Error('User already exists');
   }
 
-  // Создаем нового пользователя
-  const user = await User.create({
-    name,
-    email,
-    password, // Пароль захешируется автоматически благодаря pre('save') в модели
-  });
+  const user = await User.create({ name, email, password });
 
   if (user) {
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user._id),
+      _id: user._id, name: user.name, email: user.email, role: user.role, token: generateToken(user._id),
     });
   } else {
     res.status(400);
-    throw new Error('Неверные данные пользователя');
+    throw new Error('Invalid user data');
   }
 });
 
-// @desc    Получить профиль пользователя
-// @route   GET /api/users/profile
-// @access  Private (только с токеном)
-const getUserProfile = asyncHandler(async (req, res) => {
-  // Подтягиваем полные данные товаров из коллекции Products
-  const user = await User.findById(req.user._id).populate('favorites');
+// @desc    Logout user / clear cookie
+// @route   POST /api/users/logout
+// @access  Public
+const logoutUser = asyncHandler(async (req, res) => {
+  res.status(200).json({ message: 'Logged out successfully' });
+});
 
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).populate('favorites');
   if (user) {
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      favorites: user.favorites, // Теперь здесь будет лежать массив готовых объектов товаров
+      _id: user._id, name: user.name, email: user.email, role: user.role, favorites: user.favorites,
     });
   } else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-const addProductToFavorites = asyncHandler(async (req, res) => {
+// @desc    Add product to favorites
+// @route   POST /api/users/favorites
+// @access  Private
+const addFavorite = asyncHandler(async (req, res) => {
   const { productId } = req.body;
-  const user = await User.findById(req.user._id);
+  if (!productId) {
+    res.status(400);
+    throw new Error('Product ID required');
+  }
 
-  if (user) {
-    // Проверяем, нет ли уже этого товара в избранном
-    if (user.favorites.includes(productId)) {
-      res.status(400);
-      throw new Error('Товар уже находится в списке желаний');
-    }
+  const user = await User.findByIdAndUpdate(
+    req.user._id, { $addToSet: { favorites: productId } }, { new: true }
+  ).populate('favorites', 'name image price');
 
-    user.favorites.push(productId);
-    await user.save();
-    
-    res.status(200).json({ message: 'Товар добавлен в избранное', favorites: user.favorites });
-  } else {
+  if (user) res.status(200).json(user.favorites);
+  else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-// @desc    Удалить товар из избранного
+// @desc    Remove product from favorites
 // @route   DELETE /api/users/favorites/:productId
-// @access  Private (только авторизованные)
-const removeProductFromFavorites = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+// @access  Private
+const removeFavorite = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+  const user = await User.findByIdAndUpdate(
+    req.user._id, { $pull: { favorites: productId } }, { new: true }
+  ).populate('favorites', 'name image price');
 
-  if (user) {
-    // Фильтруем массив, оставляя только те ID, которые не совпадают с переданным
-    user.favorites = user.favorites.filter(
-      (id) => id.toString() !== req.params.productId.toString()
-    );
-    
-    await user.save();
-    res.status(200).json({ message: 'Товар удален из избранного', favorites: user.favorites });
-  } else {
+  if (user) res.status(200).json(user.favorites);
+  else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-// @desc    Обновить профиль пользователя (свои данные)
+// @desc    Update user profile
 // @route   PUT /api/users/profile
-// @access  Private (только авторизованные)
+// @access  Private
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-
-    // Если пользователь передал новый пароль, обновляем его
-    // (он автоматически захешируется благодаря pre-save хуку в модели)
-    if (req.body.password) {
-      user.password = req.body.password;
-    }
+    if (req.body.password) user.password = req.body.password;
 
     const updatedUser = await user.save();
-
     res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      role: updatedUser.role,
-      token: generateToken(updatedUser._id), // Выдаем новый токен, так как данные изменились
+      _id: updatedUser._id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, token: generateToken(updatedUser._id),
     });
   } else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-// ==========================================
-// АДМИНИСТРАТИВНЫЕ КОНТРОЛЛЕРЫ
-// ==========================================
+// @desc    Forgot password
+// @route   POST /api/users/forgotpassword
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
 
-// @desc    Получить список всех пользователей
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const resetLink = `${frontendUrl}/resetpassword/${resetToken}`;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset - DPL Shop',
+      text: `Reset link: \n\n ${resetLink}`,
+      html: `<h1>Password Reset</h1><a href="${resetLink}">Click here to reset password</a>`,
+    });
+    res.status(200).json({ success: true, data: 'Email sent' });
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+    res.status(500);
+    throw new Error('Email could not be sent');
+  }
+});
+
+// @desc    Reset password
+// @route   PUT /api/users/resetpassword/:resettoken
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken, resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error('Invalid or expired token');
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  res.status(200).json({ success: true, data: 'Password updated' });
+});
+
+// @desc    Get all users
 // @route   GET /api/users
 // @access  Private/Admin
 const getUsers = asyncHandler(async (req, res) => {
@@ -166,22 +191,19 @@ const getUsers = asyncHandler(async (req, res) => {
   res.json(users);
 });
 
-// @desc    Получить пользователя по ID
+// @desc    Get user by ID
 // @route   GET /api/users/:id
 // @access  Private/Admin
 const getUserById = asyncHandler(async (req, res) => {
-  // Ищем пользователя, но исключаем поле пароля из ответа (.select('-password'))
   const user = await User.findById(req.params.id).select('-password');
-
-  if (user) {
-    res.json(user);
-  } else {
+  if (user) res.json(user);
+  else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-// @desc    Обновить данные пользователя (включая РОЛЬ)
+// @desc    Update user
 // @route   PUT /api/users/:id
 // @access  Private/Admin
 const updateUser = asyncHandler(async (req, res) => {
@@ -190,54 +212,38 @@ const updateUser = asyncHandler(async (req, res) => {
   if (user) {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
-    
-    // Самое важное: админ может менять роль (например, назначить менеджером)
     user.role = req.body.role || user.role;
 
     const updatedUser = await user.save();
-
     res.json({
-      _id: updatedUser._id,
-      name: updatedUser.name,
-      email: updatedUser.email,
-      role: updatedUser.role,
+      _id: updatedUser._id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role,
     });
   } else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-// @desc    Удалить пользователя
+// @desc    Delete user
 // @route   DELETE /api/users/:id
 // @access  Private/Admin
 const deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   if (user) {
-    // Защита от случайного удаления самого себя (главного админа)
     if (user.role === 'admin' && req.user._id.toString() === user._id.toString()) {
       res.status(400);
-      throw new Error('Вы не можете удалить собственного пользователя (администратора)');
+      throw new Error('Cannot delete self (admin)');
     }
-
     await User.deleteOne({ _id: user._id });
-    res.json({ message: 'Пользователь успешно удален' });
+    res.json({ message: 'User deleted' });
   } else {
     res.status(404);
-    throw new Error('Пользователь не найден');
+    throw new Error('User not found');
   }
 });
 
-export { 
-  authUser, 
-  registerUser, 
-  getUserProfile, 
-  addProductToFavorites, 
-  removeProductFromFavorites,
-  updateUserProfile, // Новая
-  getUsers,          // Новая
-  getUserById,       // Новая
-  updateUser,        // Новая
-  deleteUser         // Новая
+export {
+  authUser, registerUser, logoutUser, getUserProfile, addFavorite, removeFavorite,
+  updateUserProfile, forgotPassword, resetPassword, getUsers, getUserById, updateUser, deleteUser,
 };

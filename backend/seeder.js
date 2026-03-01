@@ -10,34 +10,34 @@ connectDB();
 
 const importData = async () => {
   try {
-    // 1. Очищаем коллекции от старых данных
+    // Clear old data
     await Product.deleteMany();
     await User.deleteMany();
 
-    // 2. Создаем тестового администратора (он нам нужен, так как в модели Product поле user обязательно)
+    // Create admin user
     const createdUsers = await User.create([
       {
         name: 'Admin User',
         email: 'admin@example.com',
-        password: 'password123', // Убедись, что pre-save хук в userModel его захеширует
+        password: 'password123',
         role: 'admin',
       }
     ]);
 
     const adminUserId = createdUsers[0]._id;
 
-    // 3. Добавляем ID администратора к каждому товару из тестового массива
+    // Add admin ID to products
     const sampleProducts = products.map((product) => {
       return { ...product, user: adminUserId };
     });
 
-    // 4. Загружаем товары в базу данных
+    // Insert products
     await Product.insertMany(sampleProducts);
 
-    console.log('Данные успешно загружены!');
+    console.log('Data Imported!');
     process.exit();
   } catch (error) {
-    console.error(`Ошибка при загрузке данных: ${error.message}`);
+    console.error(`Error: ${error.message}`);
     process.exit(1);
   }
 };
@@ -47,15 +47,14 @@ const destroyData = async () => {
     await Product.deleteMany();
     await User.deleteMany();
 
-    console.log('Данные успешно удалены!');
+    console.log('Data Destroyed!');
     process.exit();
   } catch (error) {
-    console.error(`Ошибка при удалении данных: ${error.message}`);
+    console.error(`Error: ${error.message}`);
     process.exit(1);
   }
 };
 
-// Проверяем аргумент командной строки: если передано "-d", то удаляем данные, иначе - загружаем
 if (process.argv[2] === '-d') {
   destroyData();
 } else {

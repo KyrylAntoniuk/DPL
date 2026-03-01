@@ -37,7 +37,7 @@ desktop.ini
 
 # Настройки IDE и редакторов кода (VS Code, WebStorm)
 .vscode/
-.idea/
+../.idea/
 *.suo
 *.ntvs*
 *.njsproj

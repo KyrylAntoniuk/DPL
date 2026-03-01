@@ -1,0 +1,237 @@
+[
+  {
+    "name": "Apple MacBook Pro 14 M3",
+    "brand": "Apple",
+    "category": "Ноутбуки",
+    "description": "Новый MacBook Pro с чипом M3. Идеален для работы и творчества.",
+    "basePrice": 1599,
+    "generalImages": [
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp14-spacegray-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "Apple M3" },
+      { "name": "Оперативная память", "value": "8 ГБ" },
+      { "name": "Дисплей", "value": "14.2 дюйма" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Space Gray", "Storage": "512GB" },
+        "price": 1599,
+        "countInStock": 10,
+        "images": ["https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp14-spacegray-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"]
+      },
+      {
+        "options": { "Color": "Silver", "Storage": "1TB" },
+        "price": 1799,
+        "countInStock": 5,
+        "images": ["https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/mbp14-silver-select-202310?wid=904&hei=840&fmt=jpeg&qlt=90&.v=1697311054290"]
+      }
+    ],
+    "rating": 4.8,
+    "numReviews": 12
+  },
+  {
+    "name": "Dell XPS 15",
+    "brand": "Dell",
+    "category": "Ноутбуки",
+    "description": "Мощный ноутбук на Windows с потрясающим OLED дисплеем.",
+    "basePrice": 2199,
+    "generalImages": [
+      "https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/notebooks/xps-notebooks/xps-15-9530/media-gallery/touch-black/notebook-xps-15-9530-t-black-gallery-1.psd?fmt=png-alpha&pscan=auto&scl=1&hei=402&wid=536&qlt=100,1&resMode=sharp2&size=536,402&chrss=full"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "Intel Core i7" },
+      { "name": "Оперативная память", "value": "16 ГБ" },
+      { "name": "Дисплей", "value": "15.6 дюйма OLED" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Platinum Silver", "Storage": "512GB" },
+        "price": 2199,
+        "countInStock": 8,
+        "images": []
+      },
+      {
+        "options": { "Color": "Platinum Silver", "Storage": "1TB" },
+        "price": 2399,
+        "countInStock": 3,
+        "images": []
+      }
+    ],
+    "rating": 4.5,
+    "numReviews": 8
+  },
+  {
+    "name": "iPhone 15 Pro",
+    "brand": "Apple",
+    "category": "Смартфоны",
+    "description": "Титановый корпус, чип A17 Pro и кнопка действия.",
+    "basePrice": 999,
+    "generalImages": [
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/iphone-15-pro-natural-titanium-select?wid=940&hei=1112&fmt=png-alpha&.v=1692875633597"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "A17 Pro" },
+      { "name": "Дисплей", "value": "6.1 дюйма" },
+      { "name": "Камера", "value": "48 МП" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Natural Titanium", "Storage": "128GB" },
+        "price": 999,
+        "countInStock": 20,
+        "images": []
+      },
+      {
+        "options": { "Color": "Blue Titanium", "Storage": "256GB" },
+        "price": 1099,
+        "countInStock": 15,
+        "images": []
+      }
+    ],
+    "rating": 4.9,
+    "numReviews": 45
+  },
+  {
+    "name": "Samsung Galaxy S24 Ultra",
+    "brand": "Samsung",
+    "category": "Смартфоны",
+    "description": "Искусственный интеллект Galaxy AI и титановая рамка.",
+    "basePrice": 1299,
+    "generalImages": [
+      "https://images.samsung.com/is/image/samsung/p6pim/uk/sm-s928bztqeub/gallery/uk-galaxy-s24-ultra-s928-sm-s928bztqeub-thumb-539609103"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "Snapdragon 8 Gen 3" },
+      { "name": "Дисплей", "value": "6.8 дюйма" },
+      { "name": "Камера", "value": "200 МП" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Titanium Gray", "Storage": "256GB" },
+        "price": 1299,
+        "countInStock": 10,
+        "images": []
+      },
+      {
+        "options": { "Color": "Titanium Black", "Storage": "512GB" },
+        "price": 1419,
+        "countInStock": 5,
+        "images": []
+      }
+    ],
+    "rating": 4.7,
+    "numReviews": 30
+  },
+  {
+    "name": "Sony WH-1000XM5",
+    "brand": "Sony",
+    "category": "Наушники",
+    "description": "Лучшее шумоподавление и превосходный звук.",
+    "basePrice": 399,
+    "generalImages": [
+      "https://www.sony.co.uk/image/6145c1d32e6ac8e63a46c912dc83c59e?fmt=pjpeg&wid=330&bgcolor=FFFFFF&bgc=FFFFFF"
+    ],
+    "specifications": [
+      { "name": "Тип", "value": "Беспроводные" },
+      { "name": "Шумоподавление", "value": "Активное" },
+      { "name": "Время работы", "value": "30 часов" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Black" },
+        "price": 399,
+        "countInStock": 25,
+        "images": []
+      },
+      {
+        "options": { "Color": "Silver" },
+        "price": 399,
+        "countInStock": 10,
+        "images": []
+      }
+    ],
+    "rating": 4.8,
+    "numReviews": 60
+  },
+  {
+    "name": "AirPods Pro 2",
+    "brand": "Apple",
+    "category": "Наушники",
+    "description": "Улучшенное шумоподавление и USB-C.",
+    "basePrice": 249,
+    "generalImages": [
+      "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MTJV3?wid=1144&hei=1144&fmt=jpeg&qlt=90&.v=1694014871985"
+    ],
+    "specifications": [
+      { "name": "Тип", "value": "TWS" },
+      { "name": "Шумоподавление", "value": "Активное" },
+      { "name": "Разъем", "value": "USB-C" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "White" },
+        "price": 249,
+        "countInStock": 50,
+        "images": []
+      }
+    ],
+    "rating": 4.9,
+    "numReviews": 150
+  },
+  {
+    "name": "ASUS ROG Zephyrus G14",
+    "brand": "ASUS",
+    "category": "Ноутбуки",
+    "description": "Ультракомпактный игровой ноутбук.",
+    "basePrice": 1899,
+    "generalImages": [
+      "https://dlcdnwebimgs.asus.com/gain/09d05029-058e-4058-a804-c3398570c37f/w800"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "AMD Ryzen 9" },
+      { "name": "Оперативная память", "value": "32 ГБ" },
+      { "name": "Видеокарта", "value": "RTX 4070" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Eclipse Gray", "Storage": "1TB" },
+        "price": 1899,
+        "countInStock": 4,
+        "images": []
+      }
+    ],
+    "rating": 4.6,
+    "numReviews": 15
+  },
+  {
+    "name": "Google Pixel 8 Pro",
+    "brand": "Google",
+    "category": "Смартфоны",
+    "description": "Самый умный смартфон от Google с камерой нового уровня.",
+    "basePrice": 999,
+    "generalImages": [
+      "https://lh3.googleusercontent.com/v150/6c/1a/6c1a6c1a-6c1a-6c1a-6c1a-6c1a6c1a6c1a/pixel8pro-bay-front.png"
+    ],
+    "specifications": [
+      { "name": "Процессор", "value": "Google Tensor G3" },
+      { "name": "Дисплей", "value": "6.7 дюйма" },
+      { "name": "Камера", "value": "50 МП" }
+    ],
+    "variants": [
+      {
+        "options": { "Color": "Bay", "Storage": "128GB" },
+        "price": 999,
+        "countInStock": 12,
+        "images": []
+      },
+      {
+        "options": { "Color": "Obsidian", "Storage": "256GB" },
+        "price": 1059,
+        "countInStock": 8,
+        "images": []
+      }
+    ],
+    "rating": 4.5,
+    "numReviews": 20
+  }]
