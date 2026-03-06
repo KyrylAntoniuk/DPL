@@ -9,9 +9,14 @@ const ProductCard = ({ product }) => {
 
   const imageUrl = product.generalImages?.[0] || product.image || '/images/sample.jpg';
   const price = product.basePrice !== undefined ? product.basePrice : product.price;
+  const discountPrice = product.discountPrice;
 
   return (
     <Card className="my-3 p-3 rounded product-card position-relative">
+      {discountPrice > 0 && discountPrice < price && (
+        <div className="position-absolute top-0 start-0 m-2 badge bg-danger" style={{ zIndex: 5 }}>SALE</div>
+      )}
+      
       <FavoriteIcon productId={product._id} />
       <Link to={`/product/${product._id}`}>
         <Card.Img src={imageUrl} variant="top" />
@@ -31,7 +36,18 @@ const ProductCard = ({ product }) => {
         )}
 
         {price !== undefined && (
-          <Card.Text as="h3">${price}</Card.Text>
+          <Card.Text as="h3">
+            {discountPrice > 0 && discountPrice < price ? (
+              <>
+                <span className="text-muted text-decoration-line-through me-2" style={{ fontSize: '0.8em', fontWeight: 'normal' }}>
+                  ${price}
+                </span>
+                <span className="text-danger">${discountPrice}</span>
+              </>
+            ) : (
+              `$${price}`
+            )}
+          </Card.Text>
         )}
       </Card.Body>
     </Card>

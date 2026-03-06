@@ -33,13 +33,17 @@ const Header = () => {
       <Navbar bg="dark" variant="dark" expand="lg" collapseOnSelect>
         <Container>
           <LinkContainer to="/">
-            <Navbar.Brand>DPL-Shop</Navbar.Brand>
+            <Navbar.Brand>Cyber</Navbar.Brand>
           </LinkContainer>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
               <LanguageSwitcher />
               
+              <LinkContainer to="/catalog">
+                <Nav.Link>{t('home.title')}</Nav.Link>
+              </LinkContainer>
+
               <LinkContainer to="/cart">
                 <Nav.Link>
                   <i className="fas fa-shopping-cart"></i> {t('header.cart')}

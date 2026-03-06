@@ -48,7 +48,7 @@ const HomePage = () => {
     setSearchParams(params);
 
     if (pageNumber && pageNumber !== '1') {
-      let newPath = '/';
+      let newPath = '/catalog'; // Базовый путь каталога
       if (category) newPath = `/catalog/${category}`;
       else if (keyword) newPath = `/search/${keyword}`;
       
@@ -65,7 +65,6 @@ const HomePage = () => {
 
   return (
     <Row>
-      {/* Desktop Sidebar */}
       <Col md={3} className="d-none d-md-block">
         <FilterSidebar filters={filters} setFilters={handleSetFilters} />
       </Col>
@@ -74,13 +73,11 @@ const HomePage = () => {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h1>{t('home.title')}</h1>
           
-          {/* Mobile Filter Button */}
           <Button variant="outline-dark" className="d-md-none" onClick={() => setShowFilters(true)}>
             <FaFilter /> {t('header.filters')}
           </Button>
         </div>
 
-        {/* Mobile Sidebar */}
         <Offcanvas show={showFilters} onHide={() => setShowFilters(false)} placement="start">
           <Offcanvas.Header closeButton>
             <Offcanvas.Title>{t('header.filters')}</Offcanvas.Title>

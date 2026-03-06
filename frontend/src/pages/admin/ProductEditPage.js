@@ -65,6 +65,8 @@ const ProductEditPage = () => {
     if (product) {
       const transformedProduct = {
         ...product,
+        // Форматируем дату для инпута type="date" (YYYY-MM-DD)
+        discountEndDate: product.discountEndDate ? new Date(product.discountEndDate).toISOString().split('T')[0] : '',
         variants: product.variants.map(variant => ({
           ...variant,
           options: variant.options ? Object.entries(variant.options).map(([key, value]) => ({ key, value })) : [],
@@ -113,23 +115,63 @@ const ProductEditPage = () => {
               {errors.name && <p className="text-danger">{errors.name.message}</p>}
             </Form.Group>
             <Row>
-              <Col><Form.Group controlId="basePrice" className="my-2"><Form.Label>{t('admin.basePrice')}</Form.Label><Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} /></Form.Group></Col>
-              <Col><Form.Group controlId="brand" className="my-2"><Form.Label>{t('admin.brand')}</Form.Label><Form.Control type="text" {...register('brand')} /></Form.Group></Col>
-              <Col><Form.Group controlId="category" className="my-2"><Form.Label>{t('admin.category')}</Form.Label><Form.Control type="text" {...register('category')} /></Form.Group></Col>
+              <Col>
+                <Form.Group controlId="basePrice" className="my-2">
+                  <Form.Label>{t('admin.basePrice')}</Form.Label>
+                  <Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="discountPrice" className="my-2">
+                  <Form.Label>{t('admin.discountPrice') || 'Discount Price'}</Form.Label>
+                  <Form.Control type="number" step="0.01" {...register('discountPrice', { valueAsNumber: true })} />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="discountEndDate" className="my-2">
+                  <Form.Label>{t('admin.discountEndDate') || 'Discount End Date'}</Form.Label>
+                  <Form.Control type="date" {...register('discountEndDate')} />
+                </Form.Group>
+              </Col>
             </Row>
-            <Form.Group controlId="description" className="my-2"><Form.Label>{t('product.description')}</Form.Label><Form.Control as="textarea" rows={3} {...register('description')} /></Form.Group>
+            <Row>
+              <Col>
+                <Form.Group controlId="brand" className="my-2">
+                  <Form.Label>{t('admin.brand')}</Form.Label>
+                  <Form.Control type="text" {...register('brand')} />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="category" className="my-2">
+                  <Form.Label>{t('admin.category')}</Form.Label>
+                  <Form.Control type="text" {...register('category')} />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Form.Group controlId="description" className="my-2">
+              <Form.Label>{t('product.description')}</Form.Label>
+              <Form.Control as="textarea" rows={3} {...register('description')} />
+            </Form.Group>
           </div>
 
           <div className="form-section">
             <h4>{t('product.specifications')}</h4>
             {specFields.map((field, index) => (
               <Row key={field.id} className="dynamic-row align-items-center mb-2">
-                <Col md={5}><Form.Control type="text" placeholder="Name" {...register(`specifications.${index}.key`)} /></Col>
-                <Col md={5}><Form.Control type="text" placeholder="Value" {...register(`specifications.${index}.value`)} /></Col>
-                <Col md={2}><Button variant="danger" onClick={() => removeSpec(index)}>{t('common.delete')}</Button></Col>
+                <Col md={5}>
+                  <Form.Control type="text" placeholder="Name" {...register(`specifications.${index}.key`)} />
+                </Col>
+                <Col md={5}>
+                  <Form.Control type="text" placeholder="Value" {...register(`specifications.${index}.value`)} />
+                </Col>
+                <Col md={2}>
+                  <Button variant="danger" onClick={() => removeSpec(index)}>{t('common.delete')}</Button>
+                </Col>
               </Row>
             ))}
-            <Button type="button" onClick={() => appendSpec({ key: '', value: '' })}>{t('admin.addSpec')}</Button>
+            <Button type="button" onClick={() => appendSpec({ key: '', value: '' })}>
+              {t('admin.addSpec')}
+            </Button>
           </div>
 
           <div className="form-section">
@@ -144,18 +186,30 @@ const ProductEditPage = () => {
                     </Col>
                     <Col md={6}>
                       <h6>{t('admin.parameters')}</h6>
-                      <Form.Group><Form.Label>{t('product.price')}</Form.Label><Form.Control type="number" step="0.01" {...register(`variants.${index}.price`, { valueAsNumber: true })} /></Form.Group>
-                      <Form.Group className="mt-2"><Form.Label>{t('product.inStock')}</Form.Label><Form.Control type="number" {...register(`variants.${index}.countInStock`, { valueAsNumber: true })} /></Form.Group>
-                      <Col md={2} className="d-flex align-items-end"><Button variant="danger" onClick={() => removeVariant(index)}>{t('common.delete')}</Button></Col>
+                      <Form.Group>
+                        <Form.Label>{t('product.price')}</Form.Label>
+                        <Form.Control type="number" step="0.01" {...register(`variants.${index}.price`, { valueAsNumber: true })} />
+                      </Form.Group>
+                      <Form.Group>
+                        <Form.Label>{t('product.inStock')}</Form.Label>
+                        <Form.Control type="number" {...register(`variants.${index}.countInStock`, { valueAsNumber: true })} />
+                      </Form.Group>
+                      <Col md={2} className="d-flex align-items-end">
+                        <Button variant="danger" onClick={() => removeVariant(index)}>{t('common.delete')}</Button>
+                      </Col>
                     </Col>
                   </Row>
                 </Card.Body>
               </Card>
             ))}
-            <Button type="button" onClick={() => appendVariant({ options: [{ key: '', value: '' }], price: 0, countInStock: 0 })}>{t('admin.addVariant')}</Button>
+            <Button type="button" onClick={() => appendVariant({ options: [{ key: '', value: '' }], price: 0, countInStock: 0 })}>
+              {t('admin.addVariant')}
+            </Button>
           </div>
 
-          <Button type="submit" variant="primary" className="mt-3">{t('common.save')}</Button>
+          <Button type="submit" variant="primary" className="mt-3">
+            {t('common.save')}
+          </Button>
         </Form>
       </FormContainer>
     </>

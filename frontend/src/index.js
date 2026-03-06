@@ -12,6 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Components
 import App from './App';
+import LandingPage from './pages/LandingPage'; // Импорт лендинга
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
@@ -45,10 +46,15 @@ const router = createBrowserRouter(
     createRoutesFromElements(
         <Route path="/" element={<App />}>
             {/* Public Routes */}
-            <Route index={true} path="/" element={<HomePage />} />
-            <Route path="/page/:pageNumber" element={<HomePage />} />
+            <Route index={true} path="/" element={<LandingPage />} /> {/* Лендинг на главной */}
+            
+            {/* Каталог */}
+            <Route path="/catalog" element={<HomePage />} />
+            <Route path="/catalog/page/:pageNumber" element={<HomePage />} />
             <Route path="/catalog/:category" element={<HomePage />} />
             <Route path="/catalog/:category/page/:pageNumber" element={<HomePage />} />
+            <Route path="/search/:keyword" element={<HomePage />} />
+            <Route path="/search/:keyword/page/:pageNumber" element={<HomePage />} />
 
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/cart" element={<CartPage />} />

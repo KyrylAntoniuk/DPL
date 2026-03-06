@@ -52,7 +52,7 @@ const ProductCreatePage = () => {
 
   const { register, handleSubmit, control } = useForm({
     defaultValues: {
-      name: '', basePrice: 0, brand: '', category: '', description: '', specifications: [], variants: [],
+      name: '', basePrice: 0, discountPrice: 0, discountEndDate: '', brand: '', category: '', description: '', specifications: [], variants: [],
     },
   });
 
@@ -95,6 +95,10 @@ const ProductCreatePage = () => {
             </Form.Group>
             <Row>
               <Col><Form.Group controlId="basePrice" className="my-2"><Form.Label>{t('admin.basePrice')}</Form.Label><Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} /></Form.Group></Col>
+              <Col><Form.Group controlId="discountPrice" className="my-2"><Form.Label>{t('admin.discountPrice') || 'Discount Price'}</Form.Label><Form.Control type="number" step="0.01" {...register('discountPrice', { valueAsNumber: true })} /></Form.Group></Col>
+              <Col><Form.Group controlId="discountEndDate" className="my-2"><Form.Label>{t('admin.discountEndDate') || 'Discount End Date'}</Form.Label><Form.Control type="date" {...register('discountEndDate')} /></Form.Group></Col>
+            </Row>
+            <Row>
               <Col><Form.Group controlId="brand" className="my-2"><Form.Label>{t('admin.brand')}</Form.Label><Form.Control type="text" {...register('brand')} /></Form.Group></Col>
               <Col><Form.Group controlId="category" className="my-2"><Form.Label>{t('admin.category')}</Form.Label><Form.Control type="text" {...register('category')} /></Form.Group></Col>
             </Row>

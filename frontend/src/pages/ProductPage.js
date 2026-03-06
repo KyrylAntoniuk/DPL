@@ -30,8 +30,6 @@ const ProductPage = () => {
 
   useTitle(product ? product.name : t('home.title'));
 
-  // --- Variant Logic ---
-
   const { colorOptions, otherOptions } = useMemo(() => {
     if (!product?.variants) return { colorOptions: [], otherOptions: {} };
 
@@ -112,16 +110,19 @@ const ProductPage = () => {
     });
   };
 
-  // --- End Variant Logic ---
-
   const addToCartHandler = () => {
     const variantToAdd = currentVariant || product.variants?.[0];
     if (!variantToAdd) return;
 
+    let finalPrice = variantToAdd.price;
+    if (variantToAdd.price === product.basePrice && product.discountPrice > 0) {
+        finalPrice = product.discountPrice;
+    }
+
     const itemToAdd = {
       ...product,
       qty,
-      price: variantToAdd.price || product.basePrice,
+      price: finalPrice,
       image: variantToAdd.image || product.generalImages[0],
       variantId: variantToAdd._id,
       options: variantToAdd.options,
@@ -145,7 +146,12 @@ const ProductPage = () => {
     }
   };
 
-  const currentPrice = currentVariant?.price || product?.basePrice;
+  const basePrice = currentVariant?.price || product?.basePrice;
+  const discountPrice = product?.discountPrice;
+  
+  const showDiscount = discountPrice > 0 && basePrice === product?.basePrice;
+  const displayPrice = showDiscount ? discountPrice : basePrice;
+
   const currentImage = currentVariant?.image || product?.generalImages?.[0];
   const countInStock = currentVariant?.countInStock || (product?.countInStock || 0);
 
@@ -165,7 +171,22 @@ const ProductPage = () => {
                 <ListGroup.Item>
                   <Rating value={product.rating} text={t('product.reviewsCount', { count: product.numReviews })} />
                 </ListGroup.Item>
-                <ListGroup.Item>{t('product.price')}: ${currentPrice}</ListGroup.Item>
+                <ListGroup.Item>
+                  {t('product.price')}: 
+                  {showDiscount ? (
+                    <>
+                      <span className="text-muted text-decoration-line-through mx-2">${basePrice}</span>
+                      <span className="text-danger">${displayPrice}</span>
+                      {product.discountEndDate && (
+                        <div className="text-danger small mt-1">
+                          {t('product.saleEnds') || 'Sale ends'}: {new Date(product.discountEndDate).toLocaleDateString()}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <span> ${displayPrice}</span>
+                  )}
+                </ListGroup.Item>
                 
                 {colorOptions.length > 0 && (
                   <ListGroup.Item>
@@ -225,7 +246,21 @@ const ProductPage = () => {
             <Col md={3}>
               <Card>
                 <ListGroup variant="flush">
-                  <ListGroup.Item><Row><Col>{t('product.price')}:</Col><Col><strong>${currentPrice}</strong></Col></Row></ListGroup.Item>
+                  <ListGroup.Item>
+                    <Row>
+                        <Col>{t('product.price')}:</Col>
+                        <Col>
+                            {showDiscount ? (
+                                <>
+                                <span className="text-muted text-decoration-line-through d-block" style={{fontSize: '0.9em'}}>${basePrice}</span>
+                                <strong className="text-danger">${displayPrice}</strong>
+                                </>
+                            ) : (
+                                <strong>${displayPrice}</strong>
+                            )}
+                        </Col>
+                    </Row>
+                  </ListGroup.Item>
                   <ListGroup.Item><Row><Col>{t('product.status')}:</Col><Col>{countInStock > 0 ? t('product.inStock') : t('product.outOfStock')}</Col></Row></ListGroup.Item>
                   {countInStock > 0 && (
                     <ListGroup.Item>
