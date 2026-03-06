@@ -7,7 +7,11 @@ import { useTranslation } from 'react-i18next';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
 import FormContainer from '../../components/FormContainer';
-import { useGetProductDetailsQuery, useUpdateProductMutation } from '../../redux/api/productsApiSlice';
+import { 
+  useGetProductDetailsQuery, 
+  useUpdateProductMutation,
+  useUploadProductImageMutation // Импорт
+} from '../../redux/api/productsApiSlice';
 
 const VariantOptions = ({ variantIndex, control, register, t }) => {
   const { fields, append, remove } = useFieldArray({
@@ -53,19 +57,22 @@ const ProductEditPage = () => {
 
   const { data: product, isLoading, error } = useGetProductDetailsQuery(productId);
   const [updateProduct, { isLoading: loadingUpdate }] = useUpdateProductMutation();
+  const [uploadProductImage, { isLoading: loadingUpload }] = useUploadProductImageMutation();
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
-    defaultValues: { specifications: [], variants: [] },
+  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: { specifications: [], variants: [], generalImages: [] },
   });
 
   const { fields: specFields, append: appendSpec, remove: removeSpec } = useFieldArray({ control, name: 'specifications' });
   const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({ control, name: 'variants' });
 
+  // Следим за значением generalImages для отображения превью (опционально)
+  const generalImages = watch('generalImages');
+
   useEffect(() => {
     if (product) {
       const transformedProduct = {
         ...product,
-        // Форматируем дату для инпута type="date" (YYYY-MM-DD)
         discountEndDate: product.discountEndDate ? new Date(product.discountEndDate).toISOString().split('T')[0] : '',
         variants: product.variants.map(variant => ({
           ...variant,
@@ -75,6 +82,19 @@ const ProductEditPage = () => {
       reset(transformedProduct);
     }
   }, [product, reset]);
+
+  const uploadFileHandler = async (e) => {
+    const formData = new FormData();
+    formData.append('image', e.target.files[0]);
+    try {
+      const res = await uploadProductImage(formData).unwrap();
+      toast.success(res.message);
+      // Устанавливаем загруженное изображение как первое в массиве generalImages
+      setValue('generalImages', [res.image]);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
 
   const onSubmit = async (data) => {
     const transformedData = {
@@ -106,6 +126,8 @@ const ProductEditPage = () => {
       <FormContainer>
         <h1>{t('admin.editProduct')}</h1>
         {loadingUpdate && <Loader />}
+        {loadingUpload && <Loader />}
+        
         <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-section">
             <h4>{t('admin.basicInfo')}</h4>
@@ -114,6 +136,22 @@ const ProductEditPage = () => {
               <Form.Control type="text" {...register('name', { required: true })} />
               {errors.name && <p className="text-danger">{errors.name.message}</p>}
             </Form.Group>
+            
+            {/* Загрузка изображения */}
+            <Form.Group controlId="image" className="my-2">
+              <Form.Label>Image</Form.Label>
+              <Form.Control 
+                type="text" 
+                placeholder="Enter image url" 
+                {...register('generalImages.0')} // Привязываем к первому элементу массива
+              />
+              <Form.Control 
+                type="file" 
+                label="Choose File" 
+                onChange={uploadFileHandler} 
+              />
+            </Form.Group>
+
             <Row>
               <Col>
                 <Form.Group controlId="basePrice" className="my-2">

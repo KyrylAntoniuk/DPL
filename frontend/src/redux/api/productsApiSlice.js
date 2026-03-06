@@ -88,6 +88,13 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Product'],
     }),
+    uploadProductImage: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: '/api/upload',
+        method: 'POST',
+        body: data,
+      }),
+    }),
     importProducts: builder.mutation({
       query: (products) => ({
         url: `${PRODUCTS_URL}/import`,
@@ -114,11 +121,12 @@ export const {
   useGetFilterConfigQuery,
   useUpdateFilterConfigMutation,
   useGetDynamicFiltersQuery,
-  useGetTopProductsQuery, // Export
-  useGetNewProductsQuery, // Export
+  useGetTopProductsQuery,
+  useGetNewProductsQuery,
   useCreateReviewMutation,
   useUpdateProductMutation,
   useCreateProductMutation,
+  useUploadProductImageMutation, // <-- Экспорт
   useImportProductsMutation,
   useDeleteProductMutation,
 } = productsApiSlice;
