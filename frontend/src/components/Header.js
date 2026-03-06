@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useLogoutMutation } from '../redux/api/usersApiSlice';
 import { logout } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
-import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -38,7 +37,7 @@ const Header = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <LanguageSwitcher />
+              {/* LanguageSwitcher удален */}
               
               <LinkContainer to="/catalog">
                 <Nav.Link>{t('home.title')}</Nav.Link>
