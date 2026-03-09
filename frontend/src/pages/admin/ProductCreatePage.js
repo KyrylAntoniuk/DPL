@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import Loader from '../../components/Loader';
 import FormContainer from '../../components/FormContainer';
-import { useCreateProductMutation } from '../../redux/api/productsApiSlice';
+import { useCreateProductMutation, useUploadProductImageMutation } from '../../redux/api/productsApiSlice';
 
 const VariantOptions = ({ variantIndex, control, register, t }) => {
   const { fields, append, remove } = useFieldArray({
@@ -49,15 +49,28 @@ const ProductCreatePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [createProduct, { isLoading: loadingCreate }] = useCreateProductMutation();
+  const [uploadProductImage, { isLoading: loadingUpload }] = useUploadProductImageMutation();
 
-  const { register, handleSubmit, control } = useForm({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      name: '', basePrice: 0, brand: '', category: '', description: '', specifications: [], variants: [],
+      name: '', basePrice: 0, discountPrice: 0, discountEndDate: '', brand: '', category: '', description: '', specifications: [], variants: [], generalImages: []
     },
   });
 
   const { fields: specFields, append: appendSpec, remove: removeSpec } = useFieldArray({ control, name: 'specifications' });
   const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({ control, name: 'variants' });
+
+  const uploadFileHandler = async (e) => {
+    const formData = new FormData();
+    formData.append('image', e.target.files[0]);
+    try {
+      const res = await uploadProductImage(formData).unwrap();
+      toast.success(res.message);
+      setValue('generalImages', [res.image]);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
 
   const onSubmit = async (data) => {
     const transformedData = {
@@ -86,15 +99,38 @@ const ProductCreatePage = () => {
       <FormContainer>
         <h1>{t('admin.createProductTitle')}</h1>
         {loadingCreate && <Loader />}
+        {loadingUpload && <Loader />}
+        
         <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-section">
             <h4>{t('admin.basicInfo')}</h4>
             <Form.Group controlId="name" className="my-2">
               <Form.Label>{t('auth.name')}</Form.Label>
               <Form.Control type="text" {...register('name', { required: true })} />
+              {errors.name && <p className="text-danger">{errors.name.message}</p>}
             </Form.Group>
+
+            {/* Загрузка изображения */}
+            <Form.Group controlId="image" className="my-2">
+              <Form.Label>Image</Form.Label>
+              <Form.Control 
+                type="text" 
+                placeholder="Enter image url" 
+                {...register('generalImages.0')} 
+              />
+              <Form.Control 
+                type="file" 
+                label="Choose File" 
+                onChange={uploadFileHandler} 
+              />
+            </Form.Group>
+
             <Row>
               <Col><Form.Group controlId="basePrice" className="my-2"><Form.Label>{t('admin.basePrice')}</Form.Label><Form.Control type="number" step="0.01" {...register('basePrice', { valueAsNumber: true })} /></Form.Group></Col>
+              <Col><Form.Group controlId="discountPrice" className="my-2"><Form.Label>{t('admin.discountPrice') || 'Discount Price'}</Form.Label><Form.Control type="number" step="0.01" {...register('discountPrice', { valueAsNumber: true })} /></Form.Group></Col>
+              <Col><Form.Group controlId="discountEndDate" className="my-2"><Form.Label>{t('admin.discountEndDate') || 'Discount End Date'}</Form.Label><Form.Control type="date" {...register('discountEndDate')} /></Form.Group></Col>
+            </Row>
+            <Row>
               <Col><Form.Group controlId="brand" className="my-2"><Form.Label>{t('admin.brand')}</Form.Label><Form.Control type="text" {...register('brand')} /></Form.Group></Col>
               <Col><Form.Group controlId="category" className="my-2"><Form.Label>{t('admin.category')}</Form.Label><Form.Control type="text" {...register('category')} /></Form.Group></Col>
             </Row>

@@ -60,6 +60,12 @@ const FilterSidebar = ({ filters, setFilters }) => {
     cursor: 'pointer', marginBottom: '1rem', marginTop: '1.5rem',
   };
 
+  // Helper to get label
+  const getLabel = (labelObj) => {
+    if (typeof labelObj === 'string') return labelObj;
+    return labelObj[i18n.language] || labelObj.uk || labelObj.ru || labelObj.en || 'Filter';
+  };
+
   return (
     <div className="filter-sidebar">
       <h4>{t('header.filters')}</h4>
@@ -122,7 +128,7 @@ const FilterSidebar = ({ filters, setFilters }) => {
         return (
           <div key={key}>
             <div style={sectionHeaderStyle} onClick={() => toggleSection(key)}>
-              <h5 className="m-0">{filterData.label[i18n.language] || filterData.label.en || filterData.label}</h5>
+              <h5 className="m-0">{getLabel(filterData.label)}</h5>
               {isOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
             </div>
             <Collapse in={isOpen}>

@@ -30,11 +30,24 @@ const updateFilterConfigFromProduct = async (product) => {
   if (isModified) await config.save();
 };
 
-// @desc    Fetch all products with filtering and pagination
+// Helper to check if discount is valid
+const checkDiscountValidity = (product) => {
+  // Если это Mongoose документ, используем toObject, чтобы можно было мутировать
+  const p = product.toObject ? product.toObject() : product;
+  
+  if (p.discountPrice > 0 && p.discountEndDate) {
+    if (new Date() > new Date(p.discountEndDate)) {
+      p.discountPrice = 0; // Скидка истекла
+    }
+  }
+  return p;
+};
+
+// @desc    Fetch all products with filtering, sorting and pagination
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 10;
+  const pageSize = Number(req.query.pageSize) || 10;
   const page = Number(req.query.pageNumber) || 1;
 
   const queryParams = { ...req.query };
@@ -47,7 +60,6 @@ const getProducts = asyncHandler(async (req, res) => {
     filter.name = { $regex: req.query.keyword, $options: 'i' };
   }
 
-  // Build filter object
   for (const key in queryParams) {
     if (key.startsWith('specifications.')) {
       const specName = key.split('.')[1];
@@ -55,7 +67,6 @@ const getProducts = asyncHandler(async (req, res) => {
 
       if (!filter.specifications) filter.specifications = { $all: [] };
 
-      // Filter by specification name and value(s)
       filter.specifications.$all.push({
         $elemMatch: { name: specName, value: { $in: values } }
       });
@@ -71,11 +82,22 @@ const getProducts = asyncHandler(async (req, res) => {
   }
 
   const count = await Product.countDocuments(filter);
-  const products = await Product.find(filter)
-    .limit(pageSize)
-    .skip(pageSize * (page - 1));
+  
+  let query = Product.find(filter);
 
-  res.json({ products, page, pages: Math.ceil(count / pageSize) });
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(',').join(' ');
+    query = query.sort(sortBy);
+  } else {
+    query = query.sort('-createdAt');
+  }
+
+  const products = await query.limit(pageSize).skip(pageSize * (page - 1));
+
+  // Проверяем скидки для каждого товара
+  const processedProducts = products.map(checkDiscountValidity);
+
+  res.json({ products: processedProducts, page, pages: Math.ceil(count / pageSize) });
 });
 
 // @desc    Get unique categories
@@ -104,7 +126,8 @@ const getProductById = asyncHandler(async (req, res) => {
 
   if (product) {
     const reviews = await Review.find({ product: product._id });
-    res.json({ ...product.toObject(), reviews });
+    const processedProduct = checkDiscountValidity(product);
+    res.json({ ...processedProduct, reviews });
   } else {
     res.status(404);
     throw new Error('Product not found');
@@ -153,11 +176,11 @@ const createProductReview = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const createProduct = asyncHandler(async (req, res) => {
   const {
-    name, basePrice, description, generalImages, brand, category, specifications, variants,
+    name, basePrice, discountPrice, discountEndDate, description, generalImages, brand, category, specifications, variants,
   } = req.body;
 
   const product = new Product({
-    name, basePrice, user: req.user._id, generalImages, brand, category,
+    name, basePrice, discountPrice, discountEndDate, user: req.user._id, generalImages, brand, category,
     countInStock: 0, numReviews: 0, description, specifications, variants,
   });
 
@@ -191,12 +214,14 @@ const importProducts = asyncHandler(async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = asyncHandler(async (req, res) => {
-  const { name, basePrice, description, generalImages, brand, category, specifications, variants } = req.body;
+  const { name, basePrice, discountPrice, discountEndDate, description, generalImages, brand, category, specifications, variants } = req.body;
   const product = await Product.findById(req.params.id);
 
   if (product) {
     product.name = name || product.name;
     product.basePrice = basePrice || product.basePrice;
+    product.discountPrice = discountPrice !== undefined ? discountPrice : product.discountPrice;
+    product.discountEndDate = discountEndDate !== undefined ? discountEndDate : product.discountEndDate; // Обновляем дату
     product.description = description || product.description;
     product.generalImages = generalImages || product.generalImages;
     product.brand = brand || product.brand;

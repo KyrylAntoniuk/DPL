@@ -1,3 +1,4 @@
+import path from 'path'; // Импорт path
 import express from 'express';
 import dotenv from 'dotenv';
 // Load env vars first
@@ -14,6 +15,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import filterRoutes from './routes/filterRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js'; // Импорт uploadRoutes
 
 // Middleware
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
@@ -40,6 +42,11 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/filters', filterRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api/delivery', deliveryRoutes);
+app.use('/api/upload', uploadRoutes); // Подключаем маршрут загрузки
+
+// Делаем папку uploads статической
+const __dirname = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // Error handling
 app.use(notFound);

@@ -30,7 +30,22 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 60,
     }),
-    // --- Новые эндпоинты для динамических фильтров ---
+    // --- New Endpoints for Landing Page ---
+    getTopProducts: builder.query({
+      query: () => ({
+        url: PRODUCTS_URL,
+        params: { sort: '-rating', pageSize: 4 },
+      }),
+      keepUnusedDataFor: 5,
+    }),
+    getNewProducts: builder.query({
+      query: () => ({
+        url: PRODUCTS_URL,
+        params: { sort: '-createdAt', pageSize: 4 },
+      }),
+      keepUnusedDataFor: 5,
+    }),
+    // --------------------------------------
     getFilterConfig: builder.query({
       query: () => ({
         url: '/api/filters/config',
@@ -49,7 +64,6 @@ export const productsApiSlice = apiSlice.injectEndpoints({
         params,
       }),
     }),
-    // ------------------------------------------------
     createReview: builder.mutation({
       query: (data) => ({
         url: `${PRODUCTS_URL}/${data.productId}/reviews`,
@@ -74,6 +88,13 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Product'],
     }),
+    uploadProductImage: builder.mutation({ // <-- Новая мутация
+      query: (data) => ({
+        url: '/api/upload',
+        method: 'POST',
+        body: data,
+      }),
+    }),
     importProducts: builder.mutation({
       query: (products) => ({
         url: `${PRODUCTS_URL}/import`,
@@ -97,12 +118,15 @@ export const {
   useGetProductDetailsQuery,
   useGetProductCategoriesQuery,
   useGetProductFiltersQuery,
-  useGetFilterConfigQuery, // <-- Экспорт
-  useUpdateFilterConfigMutation, // <-- Экспорт
-  useGetDynamicFiltersQuery, // <-- Экспорт
+  useGetFilterConfigQuery,
+  useUpdateFilterConfigMutation,
+  useGetDynamicFiltersQuery,
+  useGetTopProductsQuery,
+  useGetNewProductsQuery,
   useCreateReviewMutation,
   useUpdateProductMutation,
   useCreateProductMutation,
+  useUploadProductImageMutation, // <-- Экспорт
   useImportProductsMutation,
   useDeleteProductMutation,
 } = productsApiSlice;

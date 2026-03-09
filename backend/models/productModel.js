@@ -20,6 +20,8 @@ const productSchema = new mongoose.Schema(
     category: { type: String, required: true, index: true },
     description: { type: String, required: true },
     basePrice: { type: Number, required: true, default: 0 },
+    discountPrice: { type: Number, default: 0 },
+    discountEndDate: { type: Date }, // Дата окончания скидки
     generalImages: [{ type: String }],
     specifications: [specificationSchema],
     variants: [variantSchema],
